@@ -357,9 +357,9 @@ const client = new MongoClient(process.env.MONGODB_URI, {
 async function run() {
     await client.connect();
 
-    // const database = client.db("userdb")
+    // const database = client.db("usersDB")
     // const usersCollection = database.collection('users')
-    const usersCollection = client.db("userdb").collection('users')
+    const usersCollection = client.db("usersDB").collection('users')
 
 
     /*
@@ -482,7 +482,10 @@ async function run() {
         const filter = { _id: new ObjectId(id) }
         const updatedData = req.body;
         const updateDoc = {
-            $set: frontendUpdatedData
+            $set: {
+                name: updatedData.name,
+                description: updatedData.description
+            }
         }
 
         const result = await notesCollection.updateOne(filter, updatedDoc);
@@ -814,17 +817,16 @@ async function run() {
     app.Patch('/users/:id', async (req, res) => {
         const id = req.params.id
         const filter = { _id: new ObjectId(id) }
-        const user = req.body
+        const updatedData = req.body
 
         const updateDoc = {
             $set: {
-                name: user.name,
-                email: user.email
+                name: updatedData.name,
+                email: updatedData.email
             }
         }
-        const options = { upsert: true }
 
-        const result = await usersCollection.updateOne(filter, updateDoc, options)
+        const result = await usersCollection.updateOne(filter, updateDoc)
         res.send(result)
     })
 
