@@ -760,7 +760,7 @@ export default App;
 
 
 
-![image](./images/crud-operation.png)
+![image](./assets/images/crud-operation1.png)
 
 ### Example 2:
 
@@ -1070,7 +1070,7 @@ const UpdateUser = () => {
 export default UpdateUser;
 ```
 
-![image](./images/crud-operation2.png)
+![image](./assets/images/crud-operation1.png)
 
 ## Others:
 ### Different way to  Accessing form data:
