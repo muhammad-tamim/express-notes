@@ -387,7 +387,9 @@ Note: Middleware in Express is a function that runs between the request and the 
 
 **step 4:** 
 
-`"start": "node index.js"`: Many deployment platforms (like Render, Vercel, Railway, Heroku) automatically look for this script and They use this command to run your server., if we don't include it, deployment will fail because the platform doesn't know hot to start your app.
+- `"start": "node index.js"`: Many deployment platforms (like Render, Vercel, Railway, Heroku) automatically look for this script and They use this command to run your server., if we don't include it, deployment will fail because the platform doesn't know hot to start your app.
+
+- `"dev": "nodemon index.js",`: here nodemon is not installed globally, so we can run it directly from the terminal using: `nodemon index.js`. thats why we set nodemon into the script and when we write `npm run dev` nodemon will works.
 
 ```js
 {
@@ -397,6 +399,7 @@ Note: Middleware in Express is a function that runs between the request and the 
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
