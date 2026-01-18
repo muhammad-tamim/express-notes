@@ -108,7 +108,7 @@ app.get('/search', (req, res) => {
 
 ## Middleware: 
 
-Middleware = A functions that run before your route handler. it have access to the request and response objects and can modify them or end the request-response cycle.
+Middleware is a function that runs between the request and the response. It have access to the request and response objects and can modify them or end the request-response cycle.
 
 ```js
 const express = require('express');
