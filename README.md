@@ -436,7 +436,7 @@ app.use(cors()) // use cors middleware
 app.use(express.json()) // use express middleware
 
 
-const uri = "mongodb+srv://db-user:HSVPnZLwfnPGPjAB@cluster0.ec7ovco.mongodb.net/?appName=Cluster0";
+const uri = "Enter your mongodb uri";
 
 const client = new MongoClient(uri, {
     serverApi: {
