@@ -527,7 +527,7 @@ app.listen(port, () => {
 })
 ```
 
-Frontend:
+Frontend V1 with fetch:
 
 ```jsx
 import React, { useEffect, useState } from 'react';
@@ -761,7 +761,198 @@ const App = () => {
 export default App;
 ```
 
+Frontend V2 with axios:
 
+```js
+import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import axios from 'axios';
+
+const App = () => {
+
+  const [notes, setNotes] = useState([])
+  const [singleNotes, setSingleNotes] = useState(null) // or useState({})
+  const [id, setId] = useState()
+
+  // send data to db
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const name = e.target.name.value
+    const description = e.target.description.value
+    const singleNoteObj = { name, description }
+
+    axios.post('http://localhost:3000/notes', singleNoteObj)
+      .then(res => {
+        if (res.data.insertedId) {
+          toast.success("Note Added")
+          e.target.reset()
+          console.log(res.data)
+          singleNoteObj._id = res.data.insertedId
+          setNotes([...notes, singleNoteObj])
+        }
+      });
+  }
+
+
+  // get all data form db
+  useEffect(() => {
+    axios.get('http://localhost:3000/notes')
+      .then(res => setNotes(res.data))
+  }, [])
+
+
+  // get single data form db
+  useEffect(() => {
+    if (!id) return;
+    axios.get(`http://localhost:3000/notes/${id}`)
+      .then(res => setSingleNotes(res.data))
+  }, [id])
+
+
+  // update selected object partial data
+  const handlePatchUpdate = (e) => {
+    e.preventDefault();
+    const name = e.target.name.value
+    const description = e.target.description.value
+    const patchObj = { name, description }
+
+    axios.patch(`http://localhost:3000/notes/${id}`, patchObj)
+      .then(res => {
+        if (res.data.modifiedCount) {
+          toast.success("Note Updated(PATCH)")
+          console.log(res.data)
+
+          const updatedNotes = notes.map((note) => note._id === id ? { ...note, ...patchObj } : note)
+
+          setNotes(updatedNotes)
+
+          setSingleNotes(prev => ({ ...prev, ...patchObj }));
+        }
+      })
+  }
+
+  // replace selected object full data
+  const handlePutUpdate = (e) => {
+    e.preventDefault();
+    const name = e.target.name.value
+    const description = e.target.description.value
+    const putObj = { name, description }
+
+    axios.put(`http://localhost:3000/notes/${id}`, putObj)
+      .then(res => {
+        if (res.data.modifiedCount) {
+          toast.success("Note Updated(PUT)")
+          console.log(res.data)
+
+          const updatedNotes = notes.map((note) => note._id === id ? { ...note, ...putObj } : note)
+
+          setNotes(updatedNotes)
+
+          setSingleNotes({ _id: id, ...putObj });
+        }
+      })
+  }
+
+  // delete data form db
+  const handleDelete = (id) => {
+    axios.delete(`http://localhost:3000/notes/${id}`)
+      .then(res => {
+        if (res.data.deletedCount) {
+          console.log(res.data)
+          toast.success("Note Deleted")
+
+          const remainingNotes = notes.filter((note) => note._id !== id)
+          setNotes(remainingNotes)
+        }
+      })
+  }
+  return (
+    <div className="p-8 max-w-6xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">Notes CRUD UI</h1>
+
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="mb-6 space-y-4">
+        <input type="text" name="name" placeholder="Name" className="input w-full" />
+        <input type="text" name="description" placeholder="Description" className="input w-full" />
+        <input type="submit" value="Submit" className='btn w-full btn-primary' />
+      </form>
+
+      {/* Notes */}
+      <div className='space-y-4'>
+        {notes?.map((note) => (
+          <div key={note._id} className='flex items-center gap-2'>
+
+            <p>{note._id}</p>
+            <p>{note.name}</p>
+            <p>{note.description}</p>
+
+            <button className="btn" onClick={() => {
+              document.getElementById('my_modal_1').showModal()
+              setId(note._id)
+            }}>View Details</button>
+
+            <button className="btn" onClick={() => {
+              document.getElementById('my_modal_2').showModal()
+              setId(note._id)
+            }}>PATCH Update</button>
+
+            <button className="btn" onClick={() => {
+              document.getElementById('my_modal_3').showModal()
+              setId(note._id)
+            }}>PUT Replace</button>
+
+            <button className="btn" onClick={() => { handleDelete(note._id) }}>DELETE</button>
+
+          </div>
+        ))}
+      </div>
+
+      {/* view details modal */}
+      <dialog id="my_modal_1" className="modal">
+        <div className="modal-box">
+          <p>id: {singleNotes?._id}</p>
+          <p>Name: {singleNotes?.name}</p>
+          <p>Name: {singleNotes?.description}</p>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+
+      {/* patch modal */}
+      <dialog id="my_modal_2" className="modal">
+        <div className="modal-box">
+          <form onSubmit={handlePatchUpdate} className="mb-6 space-y-4">
+            <input type="text" name="name" defaultValue={singleNotes?.name} className="input w-full" />
+            <input type="text" name="description" defaultValue={singleNotes?.description} className="input w-full" />
+            <input type="submit" value="Submit" className='btn w-full btn-primary' />
+          </form>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+
+      {/* put modal */}
+      <dialog id="my_modal_3" className="modal">
+        <div className="modal-box">
+          <form onSubmit={handlePutUpdate} className="mb-6 space-y-4">
+            <input type="text" name="name" defaultValue={singleNotes?.name} className="input w-full" />
+            <input type="text" name="description" defaultValue={singleNotes?.description} className="input w-full" />
+            <input type="submit" value="Submit" className='btn w-full btn-primary' />
+          </form>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+
+    </div>
+  );
+}
+
+export default App;
+```
 
 ![image](./assets/images/crud-operation1.png)
 
@@ -1104,6 +1295,7 @@ const formData = new FormData(form)
 const coffeeData = Object.fromEntries(formData.entries())
 console.log(coffeeData)
 ```
+
 
 
 # Express + MongoDB + TS + Zod:
