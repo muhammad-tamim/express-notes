@@ -956,6 +956,236 @@ export default App;
 
 ![image](./assets/images/crud-operation1.png)
 
+Frontend V3 with axios + tanstack query: 
+
+```js
+import React, { useState } from "react";
+import toast from "react-hot-toast";
+import axios from "axios";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+function App() {
+  const queryClient = useQueryClient();
+  const [id, setId] = useState(null);
+
+  // -----------------------------
+  // Queries
+  // -----------------------------
+
+  // Get all notes
+  // const {data: notes = [], ........} we can set default value of notes to empty array 
+  // to avoid error before data loads, is optional because we used isLoading check below for this case
+  const { data: notes, isLoading, isError, error } = useQuery({
+    queryKey: ["notes"],
+    queryFn: async () => {
+      const res = await axios.get("http://localhost:3000/notes");
+      return res.data;
+    },
+  });
+
+  // Get single note
+  const { data: singleNotes } = useQuery({
+    queryKey: ["note", id],
+    queryFn: async () => {
+      const res = await axios.get(`http://localhost:3000/notes/${id}`);
+      return res.data;
+    },
+    enabled: !!id, // only fetch if id exists
+  });
+
+  // -----------------------------
+  // Mutations
+  // -----------------------------
+
+  // Create Note
+  const createNoteMutation = useMutation({
+    mutationFn: async (newNote) => axios.post("http://localhost:3000/notes", newNote),
+    onSuccess: () => {
+      toast.success("Note Added");
+      queryClient.invalidateQueries(["notes"]); // refetch all notes
+    },
+  });
+
+  // PATCH Note
+  const patchNoteMutation = useMutation({
+    mutationFn: async ({ id, patchObj }) =>
+      axios.patch(`http://localhost:3000/notes/${id}`, patchObj),
+    onSuccess: () => {
+      toast.success("Note Updated (PATCH)");
+      queryClient.invalidateQueries(["notes"]);
+      queryClient.invalidateQueries(["note", id]);
+    },
+  });
+
+  // PUT Note
+  const putNoteMutation = useMutation({
+    mutationFn: async ({ id, putObj }) =>
+      axios.put(`http://localhost:3000/notes/${id}`, putObj),
+    onSuccess: () => {
+      toast.success("Note Updated (PUT)");
+      queryClient.invalidateQueries(["notes"]);
+      queryClient.invalidateQueries(["note", id]);
+    },
+  });
+
+  // DELETE Note
+  const deleteNoteMutation = useMutation({
+    mutationFn: async (id) => axios.delete(`http://localhost:3000/notes/${id}`),
+    onSuccess: () => {
+      toast.success("Note Deleted");
+      queryClient.invalidateQueries(["notes"]);
+    },
+  });
+
+  // -----------------------------
+  // Handlers
+  // -----------------------------
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const name = e.target.name.value;
+    const description = e.target.description.value;
+    createNoteMutation.mutate({ name, description });
+    e.target.reset();
+  };
+
+  const handlePatchUpdate = (e) => {
+    e.preventDefault();
+    const patchObj = {
+      name: e.target.name.value,
+      description: e.target.description.value,
+    };
+    patchNoteMutation.mutate({ id, patchObj });
+  };
+
+  const handlePutUpdate = (e) => {
+    e.preventDefault();
+    const putObj = {
+      name: e.target.name.value,
+      description: e.target.description.value,
+    };
+    putNoteMutation.mutate({ id, putObj });
+  };
+
+  const handleDelete = (id) => {
+    deleteNoteMutation.mutate(id);
+  };
+
+  if (isLoading) {
+    return <h2 className="text-center text-5xl">Loading......</h2>;
+  }
+
+  if (isError) {
+    return <h2 className="text-red-500">Error: {error.message}</h2>
+  }
+
+  return (
+    <div className="p-8 max-w-6xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">Notes CRUD UI (React Query)</h1>
+
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="mb-6 space-y-4">
+        <input type="text" name="name" placeholder="Name" className="input w-full" />
+        <input
+          type="text"
+          name="description"
+          placeholder="Description"
+          className="input w-full"
+        />
+        <input type="submit" value="Submit" className="btn w-full btn-primary" />
+      </form>
+
+      {/* Notes List */}
+      <div className="space-y-4">
+        {notes.map((note) => (
+          <div key={note._id} className="flex items-center gap-2">
+            <p>{note._id}</p>
+            <p>{note.name}</p>
+            <p>{note.description}</p>
+
+            <button
+              className="btn"
+              onClick={() => {
+                setId(note._id);
+                document.getElementById("my_modal_1").showModal();
+              }}
+            >
+              View Details
+            </button>
+
+            <button
+              className="btn"
+              onClick={() => {
+                setId(note._id);
+                document.getElementById("my_modal_2").showModal();
+              }}
+            >
+              PATCH Update
+            </button>
+
+            <button
+              className="btn"
+              onClick={() => {
+                setId(note._id);
+                document.getElementById("my_modal_3").showModal();
+              }}
+            >
+              PUT Replace
+            </button>
+
+            <button className="btn" onClick={() => handleDelete(note._id)}>
+              DELETE
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* View Modal */}
+      <dialog id="my_modal_1" className="modal">
+        <div className="modal-box">
+          <p>id: {singleNotes?._id}</p>
+          <p>Name: {singleNotes?.name}</p>
+          <p>Description: {singleNotes?.description}</p>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+
+      {/* PATCH Modal */}
+      <dialog id="my_modal_2" className="modal">
+        <div className="modal-box">
+          <form onSubmit={handlePatchUpdate} className="mb-6 space-y-4">
+            <input type="text" name="name" defaultValue={singleNotes?.name} className="input w-full" />
+            <input type="text" name="description" defaultValue={singleNotes?.description} className="input w-full" />
+            <input type="submit" value="Submit" className="btn w-full btn-primary" />
+          </form>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+
+      {/* PUT Modal */}
+      <dialog id="my_modal_3" className="modal">
+        <div className="modal-box">
+          <form onSubmit={handlePutUpdate} className="mb-6 space-y-4">
+            <input type="text" name="name" defaultValue={singleNotes?.name} className="input w-full" />
+            <input type="text" name="description" defaultValue={singleNotes?.description} className="input w-full" />
+            <input type="submit" value="Submit" className="btn w-full btn-primary" />
+          </form>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+    </div>
+  );
+}
+
+export default App;
+```
+
 ### Example 2:
 
 Backend:
