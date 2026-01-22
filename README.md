@@ -355,7 +355,6 @@ const client = new MongoClient(process.env.MONGODB_URI, {
 });
 
 async function run() {
-    await client.connect();
 
     // const database = client.db("usersDB")
     // const usersCollection = database.collection('users')
@@ -447,8 +446,6 @@ const client = new MongoClient(uri, {
 });
 
 async function run() {
-
-    await client.connect();
 
     const notesCollection = client.db("crudDB").collection('notes')
 
@@ -1213,7 +1210,7 @@ const client = new MongoClient(uri, {
 });
 
 async function run() {
-    await client.connect();
+
     const usersCollection = client.db("userdb").collection('users')
 
     app.post('/users', async (req, res) => {
