@@ -15,10 +15,6 @@
   - [Examples:](#examples)
     - [Example 1:](#example-1)
     - [Example 2:](#example-2)
-  - [Others:](#others)
-    - [Different way to  Accessing form data:](#different-way-to--accessing-form-data)
-      - [Manual accessing:](#manual-accessing)
-      - [Using formData():](#using-formdata)
 - [Express + MongoDB + TS + Zod:](#express--mongodb--ts--zod)
   - [Example 1:](#example-1-1)
 - [Express + PostgreSQL + TS:](#express--postgresql--ts)
@@ -1491,38 +1487,6 @@ export default UpdateUser;
 ```
 
 ![image](./assets/images/crud-operation1.png)
-
-## Others:
-### Different way to  Accessing form data:
-
-#### Manual accessing:
-
-```js
-const name = e.target.name.value
-const email = e.target.email.value
-const phone = e.target.phone.value
-const address = e.target.address.value
-const data = {name, email, phone, address}
-```
-
-#### Using formData():
-we can simplify the process using the FormData constructor. FormData automatically collects all input values from the form, and we can easily convert them into a plain JavaScript object using Object.fromEntries():
-
-```js
-const form = e.target
-const formData = new FormData(form)
-const email = formData.get('email')
-const password = formData.get('password')
-console.log(email, password)
-```
-
-```js
-const form = e.target;
-const formData = new FormData(form)
-const coffeeData = Object.fromEntries(formData.entries())
-console.log(coffeeData)
-```
-
 
 
 # Express + MongoDB + TS + Zod:
