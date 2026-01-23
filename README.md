@@ -775,12 +775,12 @@ const App = () => {
     const singleNoteObj = { name, description }
 
     axios.post('http://localhost:3000/notes', singleNoteObj)
-      .then(res => {
-        if (res.data.insertedId) {
+      .then(data => {
+        if (data.data.insertedId) {
           toast.success("Note Added")
-          e.target.reset()
-          console.log(res.data)
-          singleNoteObj._id = res.data.insertedId
+          e.target.dataet()
+          console.log(data.data)
+          singleNoteObj._id = data.data.insertedId
           setNotes([...notes, singleNoteObj])
         }
       });
@@ -790,7 +790,7 @@ const App = () => {
   // get all data form db
   useEffect(() => {
     axios.get('http://localhost:3000/notes')
-      .then(res => setNotes(res.data))
+      .then(data => setNotes(data.data))
   }, [])
 
 
@@ -798,7 +798,7 @@ const App = () => {
   useEffect(() => {
     if (!id) return;
     axios.get(`http://localhost:3000/notes/${id}`)
-      .then(res => setSingleNotes(res.data))
+      .then(data => setSingleNotes(data.data))
   }, [id])
 
 
@@ -810,10 +810,10 @@ const App = () => {
     const patchObj = { name, description }
 
     axios.patch(`http://localhost:3000/notes/${id}`, patchObj)
-      .then(res => {
-        if (res.data.modifiedCount) {
+      .then(data => {
+        if (data.data.modifiedCount) {
           toast.success("Note Updated(PATCH)")
-          console.log(res.data)
+          console.log(data.data)
 
           const updatedNotes = notes.map((note) => note._id === id ? { ...note, ...patchObj } : note)
 
@@ -832,10 +832,10 @@ const App = () => {
     const putObj = { name, description }
 
     axios.put(`http://localhost:3000/notes/${id}`, putObj)
-      .then(res => {
-        if (res.data.modifiedCount) {
+      .then(data => {
+        if (data.data.modifiedCount) {
           toast.success("Note Updated(PUT)")
-          console.log(res.data)
+          console.log(data.data)
 
           const updatedNotes = notes.map((note) => note._id === id ? { ...note, ...putObj } : note)
 
@@ -849,9 +849,9 @@ const App = () => {
   // delete data form db
   const handleDelete = (id) => {
     axios.delete(`http://localhost:3000/notes/${id}`)
-      .then(res => {
-        if (res.data.deletedCount) {
-          console.log(res.data)
+      .then(data => {
+        if (data.data.deletedCount) {
+          console.log(data.data)
           toast.success("Note Deleted")
 
           const remainingNotes = notes.filter((note) => note._id !== id)
@@ -971,8 +971,8 @@ function App() {
   const { data: notes, isLoading, isError, error } = useQuery({
     queryKey: ["notes"],
     queryFn: async () => {
-      const res = await axios.get("http://localhost:3000/notes");
-      return res.data;
+      const data = await axios.get("http://localhost:3000/notes");
+      return data.data;
     },
   });
 
@@ -980,8 +980,8 @@ function App() {
   const { data: singleNotes } = useQuery({
     queryKey: ["note", id],
     queryFn: async () => {
-      const res = await axios.get(`http://localhost:3000/notes/${id}`);
-      return res.data;
+      const data = await axios.get(`http://localhost:3000/notes/${id}`);
+      return data.data;
     },
     enabled: !!id, // only fetch if id exists
   });
