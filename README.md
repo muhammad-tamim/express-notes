@@ -16,10 +16,12 @@
     - [Example 1:](#example-1)
     - [Example 2:](#example-2)
 - [Express + MongoDB + TS + Zod:](#express--mongodb--ts--zod)
+    - [Setup:](#setup-2)
   - [Example 1:](#example-1-1)
+  - [Example 2:](#example-2-1)
 - [Express + PostgreSQL + TS:](#express--postgresql--ts)
   - [Example 1:](#example-1-2)
-  - [Example 2:](#example-2-1)
+  - [Example 2:](#example-2-2)
   - [Example 3: Modular pattern server:](#example-3-modular-pattern-server)
 
 
@@ -1491,8 +1493,343 @@ export default UpdateUser;
 
 # Express + MongoDB + TS + Zod:
 
+### Setup: 
+
+```bash
+npm init -y
+```
+
+```bash
+npm i express cors mongodb zod dotenv
+```
+
+```bash
+npm i -D typescript tsx @types/express @types/cors @types/mongodb
+```
+
+```bash
+npx tsc --init
+```
+
+If you use firebase as the replace of JWT: 
+
+```bash
+npm i firebase-admin
+npm i -D @types/firebase-admin
+```
+
+package.json:
+```json
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "mongodb": "^7.0.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/mongodb": "^4.0.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
+```
+
+tsconfig.json:
+```json
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // File Layout
+    "rootDir": "./src",
+    "outDir": "./dist",
+    // Environment Settings
+    // See also https://aka.ms/tsconfig/module
+    "module": "nodenext",
+    "target": "esnext",
+    "types": [],
+    // For nodejs:
+    // "lib": ["esnext"],
+    // "types": ["node"],
+    // and npm install -D @types/node
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    // Stricter Typechecking Options
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    // Style Options
+    // "noImplicitReturns": true,
+    // "noImplicitOverride": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noPropertyAccessFromIndexSignature": true,
+    // Recommended Options
+    "strict": true,
+    // "jsx": "react-jsx",
+    // "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+  }
+}
+```
+
+
 ## Example 1: 
 
+```
+src/
+│
+├── app.ts
+├── server.ts
+│
+├── config/
+│   ├── db.ts
+│   └── env.ts
+│
+├── modules/
+│   └── notes/
+│       ├── notes.route.ts
+│       ├── notes.controller.ts
+│       ├── notes.service.ts
+│       ├── notes.validation.ts
+│       └── notes.types.ts
+│
+├── middlewares/
+│   └── validate.ts
+│
+└── utils/
+    └── 
+```
+
+```js
+// app.ts
+import express from 'express'
+import cors from 'cors'
+import { notesRoutes } from './notes/notes.route.js'
+
+const app = express()
+
+app.use(cors())
+app.use(express.json())
+
+app.use('/notes', notesRoutes)
+
+app.get('/', (_req, res) => {
+    res.send('Hello World!')
+})
+
+export default app
+```
+```js
+// server.ts
+import app from './app.js'
+import { connectDB } from './config/db.js'
+import { env } from './config/env.js'
+
+async function bootstrap() {
+    await connectDB()
+
+    app.listen(env.PORT, () => {
+        console.log(`Server running on port ${env.PORT}`)
+    })
+}
+
+bootstrap()
+```
+```js
+// db.ts
+import { MongoClient, ServerApiVersion } from 'mongodb'
+import dotenv from 'dotenv'
+import { env } from './env.js'
+
+dotenv.config()
+
+export const client = new MongoClient(env.MONGODB_URI, {
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true
+    }
+})
+
+export async function connectDB() {
+    await client.connect()
+    await client.db('admin').command({ ping: 1 })
+    console.log('MongoDB connected')
+}
+```
+```js
+// env.ts
+import 'dotenv/config'
+
+export const env = {
+    PORT: process.env.PORT || 3000,
+    MONGODB_URI: process.env.MONGODB_URI as string
+}
+
+if (!env.MONGODB_URI) {
+    throw new Error('MONGODB_URI is missing in .env')
+}
+```
+```js
+// middlewares/validate.ts
+import { Request, Response, NextFunction } from 'express'
+import { ZodType } from "zod"
+
+export const validate = <T>(schema: ZodType<T>) => (req: Request, res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req.body)
+
+    if (!result.success) {
+        return res.status(400).json({
+            message: "Validation failed",
+            errors: result.error.issues,
+        })
+    }
+
+    req.body = result.data
+    next()
+}
+```
+
+```ts
+// notes.route.ts
+import { Router } from 'express'
+import { createNote, getNotes, getNote, updateNote, replaceNote, deleteNote } from './notes.controller.js'
+import { validate } from '../middlewares/validate.js'
+import { createNoteSchema, updateNoteSchema } from './notes.validation.js'
+
+const router = Router()
+
+router.post('/', validate(createNoteSchema), createNote)
+router.get('/', getNotes)
+router.get('/:id', getNote)
+router.patch('/:id', validate(updateNoteSchema), updateNote)
+router.put('/:id', validate(createNoteSchema), replaceNote)
+router.delete('/:id', deleteNote)
+
+export default router
+
+export const notesRoutes = router
+```
+```js
+// notes.service.ts
+import { ObjectId } from 'mongodb'
+import { client } from '../config/db.js'
+import { Note } from './notes.types.js'
+
+
+const notesCollection = client.db('crudDB').collection<Note>('notes')
+
+export const NotesService = {
+    create(note: Note) {
+        return notesCollection.insertOne(note)
+    },
+
+    findAll() {
+        return notesCollection.find().toArray()
+    },
+
+    findOne(id: string) {
+        return notesCollection.findOne({ _id: new ObjectId(id) })
+    },
+
+    update(id: string, data: Partial<Note>) {
+        return notesCollection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: data }
+        )
+    },
+
+    replace(id: string, data: Note) {
+        return notesCollection.replaceOne(
+            { _id: new ObjectId(id) },
+            data,
+            { upsert: true }
+        )
+    },
+
+    delete(id: string) {
+        return notesCollection.deleteOne({ _id: new ObjectId(id) })
+    }
+}
+```
+```ts
+// notes.controller.ts
+import { Request, Response } from 'express'
+import { NotesService } from './notes.service.js'
+
+export const createNote = async (req: Request, res: Response) => {
+    const result = await NotesService.create(req.body)
+    res.status(201).json(result)
+}
+
+export const getNotes = async (_req: Request, res: Response) => {
+    const notes = await NotesService.findAll()
+    res.json(notes)
+}
+
+export const getNote = async (req: Request, res: Response) => {
+    const note = await NotesService.findOne(req.params.id as string)
+    res.json(note)
+}
+
+export const updateNote = async (req: Request, res: Response) => {
+    const result = await NotesService.update(req.params.id as string, req.body)
+    res.json(result)
+}
+
+export const replaceNote = async (req: Request, res: Response) => {
+    const result = await NotesService.replace(req.params.id as string, req.body)
+    res.json(result)
+}
+
+export const deleteNote = async (req: Request, res: Response) => {
+    const result = await NotesService.delete(req.params.id as string)
+    res.json(result)
+}
+```
+```ts
+// notes.types.ts
+export interface Note {
+    name: string
+    description: string
+}
+```
+```ts
+// notes.validation.ts
+import { z } from 'zod'
+
+export const createNoteSchema = z.object({
+    name: z.string().min(1),
+    description: z.string().min(1)
+})
+
+export const updateNoteSchema = createNoteSchema.partial()
+```
+
+## Example 2:
 [Click here to see the project](./express-mongodb-ts-zod-1)
 
 # Express + PostgreSQL + TS:
