@@ -1,7 +1,6 @@
 <h1 align="center">Express.js Notes</h1>
 
 - [Express:](#express)
-  - [Setup:](#setup)
   - [Routing:](#routing)
     - [Route parameters:](#route-parameters)
     - [Query Parameters:](#query-parameters)
@@ -11,24 +10,27 @@
   - [Route chaining:](#route-chaining)
   - [Serving static files:](#serving-static-files)
 - [Express + MongoDB:](#express--mongodb)
-  - [setup:](#setup-1)
+  - [setup:](#setup)
   - [Examples:](#examples)
     - [Example 1:](#example-1)
     - [Example 2:](#example-2)
 - [Express + MongoDB + TS + Zod:](#express--mongodb--ts--zod)
-    - [Setup:](#setup-2)
+    - [Setup:](#setup-1)
   - [Example 1:](#example-1-1)
   - [Example 2:](#example-2-1)
 - [Express + PostgreSQL + TS:](#express--postgresql--ts)
+  - [Setup:](#setup-2)
   - [Example 1:](#example-1-2)
   - [Example 2:](#example-2-2)
   - [Example 3: Modular pattern server:](#example-3-modular-pattern-server)
+    - [Setup:](#setup-3)
+    - [Server:](#server)
 
 
 # Express:
 Express.js is a minimal, flexible and fast web framework for Node.js. It makes building APIs and web servers much easier than using the raw http module.
 
-## Setup: 
+**Setup:** 
 ```js
 npm init -y
 ```
@@ -1511,13 +1513,6 @@ npm i -D typescript tsx @types/express @types/cors @types/mongodb
 npx tsc --init
 ```
 
-If you use firebase as the replace of JWT: 
-
-```bash
-npm i firebase-admin
-npm i -D @types/firebase-admin
-```
-
 package.json:
 ```json
 {
@@ -1833,10 +1828,7 @@ export const updateNoteSchema = createNoteSchema.partial()
 [Click here to see the project](./express-mongodb-ts-zod-1)
 
 # Express + PostgreSQL + TS:
-
-## Example 1:
-
-**Setup:**
+## Setup:
 
 ```js
 npm init -y
@@ -1917,6 +1909,7 @@ tsc --init
   }
 }
 ```
+## Example 1:
 
 ```js
 import express, { Request, Response } from "express";
@@ -2247,7 +2240,7 @@ app.listen(port, () => {
 
 ## Example 3: Modular pattern server: 
 
-**Setup:**
+### Setup:
 
 ```js
 npm init -y
@@ -2332,6 +2325,6 @@ tsc --init
 }
 ```
 
-**Server:**
+### Server:
 
 [Click here to see the code](./express-postgresql-ts-1/)
