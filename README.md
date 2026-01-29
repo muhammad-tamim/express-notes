@@ -1605,6 +1605,10 @@ Service
 Controller
   ⬇️
 Route
+  ⬇️
+app
+  ⬇️
+server
 ```
 
 ## Example 1: 
@@ -1634,6 +1638,127 @@ src/
     └── 
 ```
 
+```ts
+// notes.validation.ts
+import { z } from 'zod'
+
+export const createNoteSchema = z.object({
+    name: z.string().min(1),
+    description: z.string().min(1)
+})
+
+export const updateNoteSchema = createNoteSchema.partial()
+```
+
+```ts
+// notes.types.ts
+export interface Note {
+    name: string
+    description: string
+}
+```
+
+
+```js
+// notes.service.ts
+import { ObjectId } from 'mongodb'
+import { client } from '../config/db.js'
+import { Note } from './notes.types.js'
+
+
+const notesCollection = client.db('crudDB').collection<Note>('notes')
+
+export const NotesService = {
+    create(note: Note) {
+        return notesCollection.insertOne(note)
+    },
+
+    findAll() {
+        return notesCollection.find().toArray()
+    },
+
+    findOne(id: string) {
+        return notesCollection.findOne({ _id: new ObjectId(id) })
+    },
+
+    update(id: string, data: Partial<Note>) {
+        return notesCollection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: data }
+        )
+    },
+
+    replace(id: string, data: Note) {
+        return notesCollection.replaceOne(
+            { _id: new ObjectId(id) },
+            data,
+            { upsert: true }
+        )
+    },
+
+    delete(id: string) {
+        return notesCollection.deleteOne({ _id: new ObjectId(id) })
+    }
+}
+```
+
+```ts
+// notes.controller.ts
+import { Request, Response } from 'express'
+import { NotesService } from './notes.service.js'
+
+export const createNote = async (req: Request, res: Response) => {
+    const result = await NotesService.create(req.body)
+    res.status(201).json(result)
+}
+
+export const getNotes = async (_req: Request, res: Response) => {
+    const notes = await NotesService.findAll()
+    res.json(notes)
+}
+
+export const getNote = async (req: Request, res: Response) => {
+    const note = await NotesService.findOne(req.params.id as string)
+    res.json(note)
+}
+
+export const updateNote = async (req: Request, res: Response) => {
+    const result = await NotesService.update(req.params.id as string, req.body)
+    res.json(result)
+}
+
+export const replaceNote = async (req: Request, res: Response) => {
+    const result = await NotesService.replace(req.params.id as string, req.body)
+    res.json(result)
+}
+
+export const deleteNote = async (req: Request, res: Response) => {
+    const result = await NotesService.delete(req.params.id as string)
+    res.json(result)
+}
+```
+
+```ts
+// notes.route.ts
+import { Router } from 'express'
+import { createNote, getNotes, getNote, updateNote, replaceNote, deleteNote } from './notes.controller.js'
+import { validate } from '../middlewares/validate.js'
+import { createNoteSchema, updateNoteSchema } from './notes.validation.js'
+
+const router = Router()
+
+router.post('/', validate(createNoteSchema), createNote)
+router.get('/', getNotes)
+router.get('/:id', getNote)
+router.patch('/:id', validate(updateNoteSchema), updateNote)
+router.put('/:id', validate(createNoteSchema), replaceNote)
+router.delete('/:id', deleteNote)
+
+export default router
+
+export const notesRoutes = router
+```
+
 ```js
 // app.ts
 import express from 'express'
@@ -1653,6 +1778,7 @@ app.get('/', (_req, res) => {
 
 export default app
 ```
+
 ```js
 // server.ts
 import app from './app.js'
@@ -1669,6 +1795,7 @@ async function bootstrap() {
 
 bootstrap()
 ```
+
 ```js
 // db.ts
 import { MongoClient, ServerApiVersion } from 'mongodb'
@@ -1722,122 +1849,6 @@ export const validate = <T>(schema: ZodType<T>) => (req: Request, res: Response,
     req.body = result.data
     next()
 }
-```
-
-```ts
-// notes.route.ts
-import { Router } from 'express'
-import { createNote, getNotes, getNote, updateNote, replaceNote, deleteNote } from './notes.controller.js'
-import { validate } from '../middlewares/validate.js'
-import { createNoteSchema, updateNoteSchema } from './notes.validation.js'
-
-const router = Router()
-
-router.post('/', validate(createNoteSchema), createNote)
-router.get('/', getNotes)
-router.get('/:id', getNote)
-router.patch('/:id', validate(updateNoteSchema), updateNote)
-router.put('/:id', validate(createNoteSchema), replaceNote)
-router.delete('/:id', deleteNote)
-
-export default router
-
-export const notesRoutes = router
-```
-```js
-// notes.service.ts
-import { ObjectId } from 'mongodb'
-import { client } from '../config/db.js'
-import { Note } from './notes.types.js'
-
-
-const notesCollection = client.db('crudDB').collection<Note>('notes')
-
-export const NotesService = {
-    create(note: Note) {
-        return notesCollection.insertOne(note)
-    },
-
-    findAll() {
-        return notesCollection.find().toArray()
-    },
-
-    findOne(id: string) {
-        return notesCollection.findOne({ _id: new ObjectId(id) })
-    },
-
-    update(id: string, data: Partial<Note>) {
-        return notesCollection.updateOne(
-            { _id: new ObjectId(id) },
-            { $set: data }
-        )
-    },
-
-    replace(id: string, data: Note) {
-        return notesCollection.replaceOne(
-            { _id: new ObjectId(id) },
-            data,
-            { upsert: true }
-        )
-    },
-
-    delete(id: string) {
-        return notesCollection.deleteOne({ _id: new ObjectId(id) })
-    }
-}
-```
-```ts
-// notes.controller.ts
-import { Request, Response } from 'express'
-import { NotesService } from './notes.service.js'
-
-export const createNote = async (req: Request, res: Response) => {
-    const result = await NotesService.create(req.body)
-    res.status(201).json(result)
-}
-
-export const getNotes = async (_req: Request, res: Response) => {
-    const notes = await NotesService.findAll()
-    res.json(notes)
-}
-
-export const getNote = async (req: Request, res: Response) => {
-    const note = await NotesService.findOne(req.params.id as string)
-    res.json(note)
-}
-
-export const updateNote = async (req: Request, res: Response) => {
-    const result = await NotesService.update(req.params.id as string, req.body)
-    res.json(result)
-}
-
-export const replaceNote = async (req: Request, res: Response) => {
-    const result = await NotesService.replace(req.params.id as string, req.body)
-    res.json(result)
-}
-
-export const deleteNote = async (req: Request, res: Response) => {
-    const result = await NotesService.delete(req.params.id as string)
-    res.json(result)
-}
-```
-```ts
-// notes.types.ts
-export interface Note {
-    name: string
-    description: string
-}
-```
-```ts
-// notes.validation.ts
-import { z } from 'zod'
-
-export const createNoteSchema = z.object({
-    name: z.string().min(1),
-    description: z.string().min(1)
-})
-
-export const updateNoteSchema = createNoteSchema.partial()
 ```
 
 ## Example 2:
