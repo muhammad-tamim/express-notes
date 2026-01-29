@@ -1495,6 +1495,9 @@ export default UpdateUser;
 
 # Express + MongoDB + TS + Zod:
 
+
+
+
 ### Setup: 
 
 ```bash
@@ -1590,6 +1593,19 @@ tsconfig.json:
 }
 ```
 
+
+Note: For modular architecture follow this golder rule: 
+```
+Zod Validation
+  ⬇️
+Types
+  ⬇️
+Service
+  ⬇️
+Controller
+  ⬇️
+Route
+```
 
 ## Example 1: 
 
