@@ -1,9 +1,10 @@
 <h1 align="center">Express.js Notes</h1>
 
-- [Express:](#express)
+- [Introduction:](#introduction)
   - [Routing:](#routing)
     - [Route parameters:](#route-parameters)
     - [Query Parameters:](#query-parameters)
+  - [Difference Between req.body, req.params and req.query:](#difference-between-reqbody-reqparams-and-reqquery)
   - [Middleware:](#middleware)
   - [Sending Response:](#sending-response)
   - [Router:](#router)
@@ -27,7 +28,7 @@
     - [Server:](#server)
 
 
-# Express:
+# Introduction:
 Express.js is a minimal, flexible and fast web framework for Node.js. It makes building APIs and web servers much easier than using the raw http module.
 
 **Setup:** 
@@ -105,6 +106,85 @@ app.get('/search', (req, res) => {
     const term = req.query.term;
     const limit = req.query.limit;
     res.json({ term, limit });
+});
+```
+
+## Difference Between req.body, req.params and req.query:
+- req.body → used when we need requested body info:
+
+Frontend:
+
+```
+fetch('http://localhost:3000/users', {
+  method: 'POST',
+  headers: { 
+    'content-type': 'application/json' 
+  },
+  body: JSON.stringify({ name: "Tamim", email: "a@a.com" })
+})
+```
+
+Backend:
+
+```
+app.post('/users', async (req, res) => {
+    const newUser = req.body;
+    console.log(newUser) // { name: "Tamim", email: "a@a.com" }
+    const result = await usersCollection.insertOne(newUser);
+    res.send(result); 
+});
+```
+
+- req.params → used when we need requested url dynamic url path:
+
+Frontend: 
+
+```
+const userId = "65f1a2b3c4d5e6f7a8b9c0d1";
+
+fetch(`http://localhost:3000/users/${userId}`)
+  .then(res => res.json())
+  .then(data => console.log(data));
+```
+
+Backend:
+
+```
+app.get('/users/:id', async (req, res) => {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const result = await usersCollection.findOne(query);
+    res.send(result);
+});
+```
+
+- req.query → used when we need requested url part after ?
+
+Frontend: 
+
+```
+const page = 2;
+
+fetch(`http://localhost:3000/users?page=${page}`)
+  .then(res => res.json())
+  .then(data => console.log(data));
+```
+
+Backend: 
+
+```
+app.get('/users', async (req, res) => {
+    const page = parseInt(req.query.page); 
+    const limit = 5;
+    const skip = (page - 1) * limit;
+
+    const result = await usersCollection
+        .find()
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+
+    res.send(result);
 });
 ```
 
