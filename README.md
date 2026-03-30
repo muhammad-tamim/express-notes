@@ -15,16 +15,18 @@
   - [Examples:](#examples)
     - [Example 1:](#example-1)
     - [Example 2:](#example-2)
+- [Express + MongoDB + TS:](#express--mongodb--ts)
+  - [Setup:](#setup-1)
 - [Express + MongoDB + TS + Zod:](#express--mongodb--ts--zod)
-    - [Setup:](#setup-1)
+    - [Setup:](#setup-2)
   - [Example 1:](#example-1-1)
   - [Example 2:](#example-2-1)
 - [Express + PostgreSQL + TS:](#express--postgresql--ts)
-  - [Setup:](#setup-2)
+  - [Setup:](#setup-3)
   - [Example 1:](#example-1-2)
   - [Example 2:](#example-2-2)
   - [Example 3: Modular pattern server:](#example-3-modular-pattern-server)
-    - [Setup:](#setup-3)
+    - [Setup:](#setup-4)
     - [Server:](#server)
 
 
@@ -1572,6 +1574,199 @@ export default UpdateUser;
 
 ![image](./assets/images/crud-operation1.png)
 
+# Express + MongoDB + TS:
+## Setup: 
+
+```bash
+npm init -y
+```
+
+```bash
+npm i express cors mongodb dotenv
+```
+
+```bash
+npm i -D typescript tsx @types/node @types/express @types/mongodb @types/cors 
+```
+
+```bash
+npx tsc --init
+```
+
+
+```json
+// tsconfig.json 
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // File Layout
+    "rootDir": "./",
+    "outDir": "./dist",
+    // Environment Settings
+    // See also https://aka.ms/tsconfig/module
+    "module": "nodenext",
+    "target": "esnext",
+    // For nodejs:
+    "lib": [
+      "esnext"
+    ],
+    "types": [
+      "node"
+    ],
+    // and npm install -D @types/node
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    // Stricter Typechecking Options
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    // Style Options
+    // "noImplicitReturns": true,
+    // "noImplicitOverride": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noPropertyAccessFromIndexSignature": true,
+    // Recommended Options
+    "strict": true,
+    // "jsx": "react-jsx",
+    // "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+  }
+}
+```
+
+package.json:
+```json
+{
+  "name": "zod-backeidn",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx watch index.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/mongodb": "^4.0.6",
+    "@types/node": "^25.5.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "mongodb": "^7.1.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
+    "zod": "^4.3.6"
+  }
+}
+```
+
+```ts
+// index.ts
+
+import express from 'express'
+import cors from 'cors'
+import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb'
+import dotenv from 'dotenv'
+dotenv.config()
+
+const port = process.env.PORT || 3000
+
+const app = express()
+app.use(cors()) // use cors middleware
+app.use(express.json()) // use express middleware
+
+
+const client = new MongoClient(process.env.MONGODB_URI as string, {
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
+});
+
+async function run() {
+
+    const notesCollection = client.db("notesDB").collection('notes')
+
+
+    // POST - create new note
+    app.post('/note', async (req, res) => {
+        const note = req.body;
+        const result = await notesCollection.insertOne(note);
+        res.send(result);
+    });
+
+
+    // GET all notes
+    app.get('/notes', async (req, res) => {
+        const notes = await notesCollection.find({}).toArray();
+        res.send(notes);
+    });
+
+    // GET a single note
+    app.get('/note/:id', async (req, res) => {
+        const id = req.params.id
+        const filter = { _id: new ObjectId(id) }
+        const result = await notesCollection.findOne(filter);
+        res.send(result);
+    });
+
+
+    // PATCH - partial update
+    app.patch('/note/:id', async (req, res) => {
+        const id = req.params.id
+        const filter = { _id: new ObjectId(id) }
+        const updatedData = req.body;
+        const updatedDoc = {
+            $set: {
+                name: updatedData.name,
+                description: updatedData.description
+            }
+        }
+
+        const result = await notesCollection.updateOne(filter, updatedDoc);
+        res.send(result);
+    });
+
+    // DELETE
+    app.delete('/note/:id', async (req, res) => {
+        const result = await notesCollection.deleteOne({ _id: new ObjectId(req.params.id) });
+        res.send(result);
+    });
+
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+}
+run().catch(console.dir);
+
+
+app.get('/', (req, res) => {
+    res.send('Hello World!')
+})
+
+app.listen(port, () => {
+    console.log(`Example app listening on port ${port}`)
+})
+```
+
+.env: 
+```
+MONGODB_URI=mongodb://localhost:27017/
+```
 
 # Express + MongoDB + TS + Zod:
 
