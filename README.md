@@ -17,6 +17,7 @@
     - [Example 2:](#example-2)
 - [Express + MongoDB + TS:](#express--mongodb--ts)
   - [Setup:](#setup-1)
+  - [Example:](#example)
 - [Express + MongoDB + TS + Zod:](#express--mongodb--ts--zod)
     - [Setup:](#setup-2)
   - [Example 1:](#example-1-1)
@@ -1673,6 +1674,8 @@ package.json:
 }
 ```
 
+## Example:
+
 ```ts
 // index.ts
 
@@ -2132,22 +2135,38 @@ export const validate = <T>(schema: ZodType<T>) => (req: Request, res: Response,
 # Express + PostgreSQL + TS:
 ## Setup:
 
-```js
+- step 1: Install all require packages:
+
+```bash
 npm init -y
+```
+
+```bash
 npm i express pg dotenv
+```
+
+```bash
 npm i -D typescript tsx
-npm i --save-dev @types/express @types/pg
+```
+
+```bash
+npm i --save-dev @types/express @types/pg @types/node
+```
+
+```bash
 tsc --init
 ```
 
-```js
+- step 2: Modify tsconfig.json and package.json:
+
+```json
 // tsconfig.json
 {
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-    "rootDir": "./src",
-    "outDir": "./dist",
+    "rootDir": "./src", // un-comment it
+    "outDir": "./dist", // un-comment it
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "nodenext",
@@ -2158,9 +2177,9 @@ tsc --init
     // "types": ["node"],
     // and npm install -D @types/node
     // Other Outputs
-    // "sourceMap": true,
-    // "declaration": true,
-    // "declarationMap": true,
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
@@ -2173,8 +2192,8 @@ tsc --init
     // "noPropertyAccessFromIndexSignature": true,
     // Recommended Options
     "strict": true,
-    // "jsx": "react-jsx",
-    // "verbatimModuleSyntax": true,
+    // "jsx": "react-jsx", // comment it
+    // "verbatimModuleSyntax": true, // comment it
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
@@ -2183,15 +2202,16 @@ tsc --init
 }
 ```
 
-```js
+```json
 // package.json
+
 {
-  "name": "module-12",
+  "name": "express-ts-postgress",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./src/server.ts", // add where our main server file exist
   "scripts": {
-    "dev": "npx tsx watch ./src/server.ts",
+    "dev": "npx tsx watch ./src/server.ts", // add npm run dev script
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -2199,21 +2219,32 @@ tsc --init
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.4.1",
     "express": "^5.2.1",
-    "pg": "^8.16.3"
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/pg": "^8.15.6",
+    "@types/node": "^25.5.2",
+    "@types/pg": "^8.20.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   }
 }
 ```
-## Example 1:
+
+- step 3: create project on neonDB and add neonDB connection string to env file: 
 
 ```js
+// .env
+CONNECTION_STR=postgresql://neondb_owner:npg_CnF5zJxqcI2k@ep-soft-paper-ant6m8do-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+```
+
+- step 4: Use this boilerplate code:
+
+```js
+// src/server.ts
+
 import express, { Request, Response } from "express";
 import { Pool } from "pg";
 import dotenv from "dotenv"
@@ -2229,7 +2260,7 @@ const pool = new Pool({ connectionString: `${process.env.CONNECTION_STR}` });
 const initDB = async () => {
     await pool.query(`
         CREATE TABLE IF NOT EXISTS notes (
-        // your query
+        -- your query
         )`)
 }
 initDB()
@@ -2251,7 +2282,8 @@ app.listen(port, () => {
 });
 ```
 
-Server:
+
+## Example 1:
 
 ```js
 import express, { Request, Response } from "express";
@@ -2272,11 +2304,11 @@ const initDB = async () => {
     CREATE TABLE IF NOT EXISTS notes (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
-    content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW()
-)`)
+    content TEXT NOT NULL
+    )`)
 }
 initDB()
+
 
 // CREATE note
 app.post("/notes", async (req: Request, res: Response) => {
@@ -2292,8 +2324,8 @@ app.post("/notes", async (req: Request, res: Response) => {
 // GET all notes
 app.get("/notes", async (req: Request, res: Response) => {
     try {
-        const result = await pool.query("SELECT * FROM notes ORDER BY id DESC");
-        res.json(result.rows);
+        const result = await pool.query("SELECT * FROM notes");
+        res.send(result.rows);
     } catch (error) {
         res.status(500).send({ error });
     }
@@ -2304,7 +2336,7 @@ app.get("/notes/:id", async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
         const result = await pool.query("SELECT * FROM notes WHERE id = $1", [id]);
-        res.json(result.rows[0]);
+        res.send(result.rows[0]);
     } catch (error) {
         res.status(500).send({ error });
     }
@@ -2319,7 +2351,7 @@ app.patch("/notes/:id", async (req: Request, res: Response) => {
             "UPDATE notes SET title = COALESCE($1, title), content=COALESCE($2, content) WHERE id=$3 RETURNING *",
             [title, content, id]
         );
-        res.json(result.rows[0]);
+        res.send(result.rows[0]);
     } catch (error) {
         res.status(500).json({ error });
     }
@@ -2330,8 +2362,8 @@ app.put("/notes/:id", async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
         const { title, content } = req.body;
-        const result = await pool.query("UPDATE notes SET title=$1, content=$2 WHERE id = $3 RETURNING *", [title, content,id]);
-        res.json(result.rows[0]);
+        const result = await pool.query("UPDATE notes SET title=$1, content=$2 WHERE id = $3 RETURNING *", [title, content, id]);
+        res.send(result.rows[0]);
     } catch (error) {
         res.status(500).send({ error });
     }
@@ -2341,8 +2373,8 @@ app.put("/notes/:id", async (req: Request, res: Response) => {
 app.delete("/notes/:id", async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
-        await pool.query("DELETE FROM notes WHERE id = $1", [id]);
-        res.json({ message: "Note deleted" });
+        const result = await pool.query("DELETE FROM notes WHERE id = $1", [id]);
+        res.send({ message: "Note deleted" });
     } catch (error) {
         res.status(500).send({ error });
     }
@@ -2354,7 +2386,7 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.use((req: Request, res: Response) => {
-    res.status(404).json({
+    res.status(404).send({
         error: "Route not found",
         path: req.path,
     });
