@@ -12,23 +12,22 @@
   - [Serving static files:](#serving-static-files)
 - [Express + MongoDB:](#express--mongodb)
   - [setup:](#setup)
-  - [Examples:](#examples)
-    - [Example 1:](#example-1)
-    - [Example 2:](#example-2)
+  - [Example 1:](#example-1)
+  - [Example 2:](#example-2)
 - [Express + MongoDB + TS:](#express--mongodb--ts)
   - [Setup:](#setup-1)
-  - [Example:](#example)
-- [Express + MongoDB + TS + Zod:](#express--mongodb--ts--zod)
-    - [Setup:](#setup-2)
   - [Example 1:](#example-1-1)
+- [Express + MongoDB + TS + Zod:](#express--mongodb--ts--zod)
+  - [Setup:](#setup-2)
+  - [Example 1:](#example-1-2)
   - [Example 2:](#example-2-1)
 - [Express + PostgreSQL + TS:](#express--postgresql--ts)
   - [Setup:](#setup-3)
-  - [Example 1:](#example-1-2)
+  - [Example 1:](#example-1-3)
   - [Example 2:](#example-2-2)
-  - [Example 3: Modular pattern server:](#example-3-modular-pattern-server)
-    - [Setup:](#setup-4)
-    - [Server:](#server)
+- [Express + PostgreSQL + TS (Modular pattern):](#express--postgresql--ts-modular-pattern)
+  - [Setup:](#setup-4)
+  - [Example 1:](#example-1-4)
 
 
 # Introduction:
@@ -498,11 +497,7 @@ Note: Middleware in Express is a function that runs between the request and the 
 ```
 
 
-
-
-## Examples:
-
-### Example 1:
+## Example 1:
 
 Backend:
 
@@ -1266,7 +1261,7 @@ function App() {
 export default App;
 ```
 
-### Example 2:
+## Example 2:
 
 Backend:
 
@@ -1674,7 +1669,7 @@ package.json:
 }
 ```
 
-## Example:
+## Example 1:
 
 ```ts
 // index.ts
@@ -1773,10 +1768,7 @@ MONGODB_URI=mongodb://localhost:27017/
 
 # Express + MongoDB + TS + Zod:
 
-
-
-
-### Setup: 
+## Setup: 
 
 ```bash
 npm init -y
@@ -2572,9 +2564,9 @@ app.listen(port, () => {
 });
 ```
 
-## Example 3: Modular pattern server: 
+# Express + PostgreSQL + TS (Modular pattern): 
 
-### Setup:
+## Setup:
 
 ```js
 npm init -y
@@ -2659,6 +2651,6 @@ tsc --init
 }
 ```
 
-### Server:
+## Example 1:
 
 [Click here to see the code](./express-postgresql-ts-1/)
