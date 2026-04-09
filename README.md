@@ -17,18 +17,16 @@
 - [Express + MongoDB + TS:](#express--mongodb--ts)
   - [Setup:](#setup-1)
   - [Example 1:](#example-1-1)
-- [Express + MongoDB + TS + Zod:](#express--mongodb--ts--zod)
+- [Express + MongoDB + TS + Zod (Modeller Pattern):](#express--mongodb--ts--zod-modeller-pattern)
   - [Setup:](#setup-2)
   - [Example 1:](#example-1-2)
   - [Example 2:](#example-2-1)
 - [Express + PostgreSQL + TS:](#express--postgresql--ts)
   - [Setup:](#setup-3)
   - [Example 1:](#example-1-3)
-  - [Example 2:](#example-2-2)
 - [Express + PostgreSQL + TS (Modular pattern):](#express--postgresql--ts-modular-pattern)
   - [Setup:](#setup-4)
   - [Example 1:](#example-1-4)
-  - [Example 1:](#example-1-5)
 
 
 # Introduction:
@@ -414,7 +412,38 @@ Note:
 - cors allows cross-origin requests, useful when frontend and backend run on different ports or domains.
 - dotenv lets us store sensitive data (like MongoDB URI or passwords) in a .env file and access them using process.env, keeping our project secure and preventing secrets from going to GitHub.
 
+
 **step 3:** 
+
+- `"start": "node index.js"`: Many deployment platforms (like Render, Vercel, Railway, Heroku) automatically look for this script and They use this command to run your server., if we don't include it, deployment will fail because the platform doesn't know hot to start your app.
+
+- `"dev": "nodemon index.js",`: here nodemon is not installed globally, so we can run it directly from the terminal using: `nodemon index.js`. thats why we set nodemon into the script and when we write `npm run dev` nodemon will works.
+
+```js
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "mongodb": "^7.0.0",
+    "nodemon": "^3.1.11"
+  }
+}
+```
+
+**step 4:** 
 
 ```js
 const express = require('express')
@@ -467,35 +496,6 @@ app.listen(port, () => {
 ```
 Note: Middleware in Express is a function that runs between the request and the response. It can modify the request, check something, or run some logic before sending the final response.
 
-**step 4:** 
-
-- `"start": "node index.js"`: Many deployment platforms (like Render, Vercel, Railway, Heroku) automatically look for this script and They use this command to run your server., if we don't include it, deployment will fail because the platform doesn't know hot to start your app.
-
-- `"dev": "nodemon index.js",`: here nodemon is not installed globally, so we can run it directly from the terminal using: `nodemon index.js`. thats why we set nodemon into the script and when we write `npm run dev` nodemon will works.
-
-```js
-{
-  "name": "server",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "mongodb": "^7.0.0",
-    "nodemon": "^3.1.11"
-  }
-}
-```
 
 
 ## Example 1:
@@ -1030,8 +1030,6 @@ const App = () => {
 export default App;
 ```
 
-![image](./assets/images/crud-operation1.png)
-
 Frontend V3 with axios + tanstack query: 
 
 ```js
@@ -1261,6 +1259,8 @@ function App() {
 
 export default App;
 ```
+
+![image](./assets/images/crud-operation1.png)
 
 ## Example 2:
 
@@ -1597,8 +1597,8 @@ npx tsc --init
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-    "rootDir": "./",
-    "outDir": "./dist",
+    "rootDir": "./", // un-commit it, 
+    "outDir": "./dist", // un-commit it
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "nodenext",
@@ -1627,8 +1627,8 @@ npx tsc --init
     // "noPropertyAccessFromIndexSignature": true,
     // Recommended Options
     "strict": true,
-    // "jsx": "react-jsx",
-    // "verbatimModuleSyntax": true,
+    // "jsx": "react-jsx", // commit it
+    // "verbatimModuleSyntax": true, // commit it
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
@@ -1647,7 +1647,7 @@ package.json:
   "scripts": {
     "dev": "tsx watch index.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -1767,7 +1767,7 @@ app.listen(port, () => {
 MONGODB_URI=mongodb://localhost:27017/
 ```
 
-# Express + MongoDB + TS + Zod:
+# Express + MongoDB + TS + Zod (Modeller Pattern):
 
 ## Setup: 
 
@@ -1787,8 +1787,51 @@ npm i -D typescript tsx @types/express @types/cors @types/mongodb
 npx tsc --init
 ```
 
-package.json:
 ```json
+// tsconfig.json:
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // File Layout
+    "rootDir": "./src", // uncomment it
+    "outDir": "./dist", // uncomment it
+    // Environment Settings
+    // See also https://aka.ms/tsconfig/module
+    "module": "nodenext",
+    "target": "esnext",
+    "types": [],
+    // For nodejs:
+    // "lib": ["esnext"],
+    // "types": ["node"],
+    // and npm install -D @types/node
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    // Stricter Typechecking Options
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    // Style Options
+    // "noImplicitReturns": true,
+    // "noImplicitOverride": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noPropertyAccessFromIndexSignature": true,
+    // Recommended Options
+    "strict": true,
+    // "jsx": "react-jsx", // comment ti
+    // "verbatimModuleSyntax": true, // comment it
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+  }
+}
+```
+
+```json
+// package.json:
 {
   "name": "server",
   "version": "1.0.0",
@@ -1821,48 +1864,7 @@ package.json:
 }
 ```
 
-tsconfig.json:
-```json
-{
-  // Visit https://aka.ms/tsconfig to read more about this file
-  "compilerOptions": {
-    // File Layout
-    "rootDir": "./src",
-    "outDir": "./dist",
-    // Environment Settings
-    // See also https://aka.ms/tsconfig/module
-    "module": "nodenext",
-    "target": "esnext",
-    "types": [],
-    // For nodejs:
-    // "lib": ["esnext"],
-    // "types": ["node"],
-    // and npm install -D @types/node
-    // Other Outputs
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-    // Stricter Typechecking Options
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    // Style Options
-    // "noImplicitReturns": true,
-    // "noImplicitOverride": true,
-    // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noPropertyAccessFromIndexSignature": true,
-    // Recommended Options
-    "strict": true,
-    // "jsx": "react-jsx",
-    // "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
-    "moduleDetection": "force",
-    "skipLibCheck": true,
-  }
-}
-```
+
 
 
 Note: For modular architecture follow this golder rule: 
@@ -2204,7 +2206,9 @@ tsc --init
   "description": "",
   "main": "./src/server.ts", // add where our main server file exist
   "scripts": {
-    "dev": "npx tsx watch ./src/server.ts", // add npm run dev script
+    "dev": "tsx watch ./src/server.ts", // add npm run dev script
+    "build": "tsc",
+    "start": "node ./dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -2279,6 +2283,8 @@ app.listen(port, () => {
 ## Example 1:
 
 ```js
+// src/server.ts
+
 import express, { Request, Response } from "express";
 import { Pool } from "pg";
 import dotenv from "dotenv"
@@ -2296,8 +2302,8 @@ const initDB = async () => {
     await pool.query(`
     CREATE TABLE IF NOT EXISTS notes (
     id SERIAL PRIMARY KEY,
-    title TEXT NOT NULL,
-    content TEXT NOT NULL
+    name TEXT NOT NULL,
+    description TEXT NOT NULL
     )`)
 }
 initDB()
@@ -2306,11 +2312,24 @@ initDB()
 // CREATE note
 app.post("/notes", async (req: Request, res: Response) => {
     try {
-        const { title, content } = req.body;
-        const result = await pool.query("INSERT INTO notes (title, content) VALUES($1, $2) RETURNING *", [title, content]);
-        res.send(result.rows);
-    } catch (error) {
-        res.status(500).send({ error });
+        const { name, description } = req.body;
+
+        const result = await pool.query(
+            "INSERT INTO notes (name, description) VALUES($1, $2) RETURNING *",
+            [name, description]
+        );
+
+        res.status(201).send({
+            success: true,
+            message: "Note created",
+            data: result.rows[0]
+        });
+
+    } catch (error: any) {
+        res.status(500).send({
+            success: false,
+            message: error.message
+        });
     }
 });
 
@@ -2318,9 +2337,18 @@ app.post("/notes", async (req: Request, res: Response) => {
 app.get("/notes", async (req: Request, res: Response) => {
     try {
         const result = await pool.query("SELECT * FROM notes");
-        res.send(result.rows);
-    } catch (error) {
-        res.status(500).send({ error });
+
+        res.send({
+            success: true,
+            message: "Notes fetched",
+            data: result.rows
+        });
+
+    } catch (error: any) {
+        res.status(500).send({
+            success: false,
+            message: error.message
+        });
     }
 });
 
@@ -2328,37 +2356,91 @@ app.get("/notes", async (req: Request, res: Response) => {
 app.get("/notes/:id", async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
-        const result = await pool.query("SELECT * FROM notes WHERE id = $1", [id]);
-        res.send(result.rows[0]);
-    } catch (error) {
-        res.status(500).send({ error });
+
+        const result = await pool.query(
+            "SELECT * FROM notes WHERE id = $1",
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).send({
+                success: false,
+                message: "Note not found"
+            });
+        }
+
+        res.send({
+            success: true,
+            message: "Note fetched",
+            data: result.rows[0]
+        });
+
+    } catch (error: any) {
+        res.status(500).send({
+            success: false,
+            message: error.message
+        });
     }
 });
 
-// PATCH note
+// PATCH - partial update
 app.patch("/notes/:id", async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
-        const { title, content } = req.body;
+        const { name, description } = req.body;
+
         const result = await pool.query(
-            "UPDATE notes SET title = COALESCE($1, title), content=COALESCE($2, content) WHERE id=$3 RETURNING *",
-            [title, content, id]
+            `UPDATE notes 
+             SET 
+                name = COALESCE($1, name),
+                description = COALESCE($2, description)
+             WHERE id = $3
+             RETURNING *`,
+            [name ?? null, description ?? null, id]
         );
-        res.send(result.rows[0]);
-    } catch (error) {
-        res.status(500).json({ error });
+
+        res.send({
+            success: true,
+            message: "Note updated",
+            data: result.rows[0]
+        });
+
+    } catch (error: any) {
+        res.status(500).send({
+            success: false,
+            message: error.message
+        });
     }
 });
 
-// PUT note
+// PUT - full replace (upsert)
 app.put("/notes/:id", async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
-        const { title, content } = req.body;
-        const result = await pool.query("UPDATE notes SET title=$1, content=$2 WHERE id = $3 RETURNING *", [title, content, id]);
-        res.send(result.rows[0]);
-    } catch (error) {
-        res.status(500).send({ error });
+        const { name, description } = req.body;
+
+        const result = await pool.query(
+            `INSERT INTO notes (id, name, description)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (id)
+             DO UPDATE SET
+                name = EXCLUDED.name,
+                description = EXCLUDED.description
+             RETURNING *`,
+            [id, name, description]
+        );
+
+        res.send({
+            success: true,
+            message: "Note replaced",
+            data: result.rows[0]
+        });
+
+    } catch (error: any) {
+        res.status(500).send({
+            success: false,
+            message: error.message
+        });
     }
 });
 
@@ -2366,10 +2448,30 @@ app.put("/notes/:id", async (req: Request, res: Response) => {
 app.delete("/notes/:id", async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
-        const result = await pool.query("DELETE FROM notes WHERE id = $1", [id]);
-        res.send({ message: "Note deleted" });
-    } catch (error) {
-        res.status(500).send({ error });
+
+        const result = await pool.query(
+            "DELETE FROM notes WHERE id = $1 RETURNING *",
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).send({
+                success: false,
+                message: "Note not found"
+            });
+        }
+
+        res.send({
+            success: true,
+            message: "Note deleted",
+            data: result.rows[0]
+        });
+
+    } catch (error: any) {
+        res.status(500).send({
+            success: false,
+            message: error.message
+        });
     }
 });
 
@@ -2388,180 +2490,6 @@ app.use((req: Request, res: Response) => {
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
-});
-```
-
-## Example 2: 
-
-```js
-import express, { Request, Response } from "express";
-import { Pool } from "pg";
-import dotenv from "dotenv"
-import path from "path"
-
-const app = express();
-app.use(express.json());
-
-const port = process.env.PORT || 3000;
-dotenv.config({ path: path.join(process.cwd(), ".env") })
-const pool = new Pool({ connectionString: `${process.env.CONNECTION_STR}` });
-
-
-const initDB = async () => {
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS users(
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        email VARCHAR(150) UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        age INT,
-        phone VARCHAR(15),
-        address TEXT,
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-        )`)
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS todos(
-        id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id) ON DELETE CASCADE,
-        title VARCHAR(200) NOT NULL,
-        description TEXT,
-        completed BOOLEAN DEFAULT false
-        )`)
-}
-initDB()
-
-
-app.post("/users", async (req: Request, res: Response) => {
-    try {
-        const { name, email, password } = req.body
-        const result = await pool.query("INSERT INTO users(name, email, password) VALUES($1, $2, $3) RETURNING *",
-            [name, email, password])
-        res.send(result.rows)
-    }
-    catch (err: any) {
-        res.status(500).send({ message: err.message })
-    }
-})
-
-app.get("/users", async (req: Request, res: Response) => {
-    try {
-        const result = await pool.query("SELECT * FROM users")
-        res.send(result.rows)
-    }
-    catch (err: any) {
-        res.status(500).send({ message: err.message })
-    }
-})
-
-app.get("/users/:id", async (req: Request, res: Response) => {
-    try {
-        const id = req.params.id
-        const result = await pool.query("SELECT * FROM users WHERE id=$1", [id])
-        res.send(result.rows[0])
-    }
-    catch (err: any) {
-        res.status(500).send({ message: err.message })
-    }
-})
-
-app.put("/users/:id", async (req: Request, res: Response) => {
-    try {
-        const id = req.params.id
-        const { name, email, password } = req.body
-        const result = await pool.query("UPDATE users SET name=$1, email=$2, password=$3 WHERE id=$4 RETURNING *",
-            [name, email, password, id])
-        res.send(result.rows[0])
-    }
-    catch (err: any) {
-        res.status(500).send({ message: err.message })
-    }
-})
-
-app.delete("/users/:id", async (req: Request, res: Response) => {
-    try {
-        const id = req.params.id
-
-        const result = await pool.query("DELETE FROM users WHERE id=$1", [id])
-        res.send({ message: "User deleted" })
-    }
-    catch (err: any) {
-        res.status(500).send({ message: err.message })
-    }
-})
-
-
-app.post("/todos", async (req: Request, res: Response) => {
-    try {
-        const { user_id, title } = req.body
-        const result = await pool.query("INSERT INTO todos(user_id, title) VALUES($1, $2) RETURNING *", [user_id, title])
-        res.send(result.rows)
-    }
-    catch (err: any) {
-        res.status(500).send({ message: err.message })
-    }
-})
-
-app.get("/todos", async (req: Request, res: Response) => {
-    try {
-        const result = await pool.query("SELECT * FROM todos")
-        res.send(result.rows)
-    }
-    catch (err: any) {
-        res.status(500).send({ message: err.message })
-    }
-})
-
-app.get("/todos/:id", async (req: Request, res: Response) => {
-    try {
-        const id = req.params.id
-        const result = await pool.query("SELECT * FROM todos WHERE id=$1", [id])
-        res.send(result.rows[0])
-    }
-    catch (err: any) {
-        res.status(500).send({ message: err.message })
-    }
-})
-
-app.put("/todos/:id", async (req: Request, res: Response) => {
-    try {
-        const id = req.params.id
-        const { title } = req.body
-        const result = await pool.query("UPDATE todos SET title=$1 WHERE id=$2 RETURNING *", [title, id])
-        res.send(result.rows[0])
-    }
-    catch (err: any) {
-        res.status(500).send({ message: err.message })
-    }
-})
-
-app.delete("/todos/:id", async (req: Request, res: Response) => {
-    try {
-        const id = req.params.id
-        const result = await pool.query("DELETE FROM todos WHERE id=$1", [id])
-        res.send({ message: "todos deleted" })
-    }
-    catch (err: any) {
-        res.status(500).send({ message: err.message })
-    }
-})
-
-
-app.use((req: Request, res: Response) => {
-    res.status(404).json({
-        error: "Route Not Found",
-        path: req.path
-    })
-})
-
-// Home route
-app.get("/", (req: Request, res: Response) => {
-    res.send("Hello Express!");
-});
-
-// Start server
-app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
 });
 ```
 
@@ -2645,7 +2573,9 @@ tsc --init
   "description": "",
   "main": "./src/server.ts", // add where our main server file exist
   "scripts": {
-    "dev": "npx tsx watch ./src/server.ts", // add npm run dev script
+    "dev": "tsx watch ./src/server.ts",
+    "build": "tsc",
+    "start": "node ./dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -2729,13 +2659,42 @@ import config from "./env.js";
 export const pool = new Pool({ connectionString: config.connection_str });
 
 export const initDB = async () => {
-    await pool.query(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS notes (
       id SERIAL PRIMARY KEY,
-      title TEXT NOT NULL,
-      content TEXT NOT NULL
+      name TEXT NOT NULL,
+      description TEXT NOT NULL
     )
   `);
+};
+```
+
+```ts
+// src/utils/apiResponse.ts
+
+export const apiResponse = {
+    success(res: any, data: any, message = "OK") {
+        return res.status(200).send({
+            success: true,
+            message,
+            data
+        });
+    },
+
+    created(res: any, data: any, message = "Created") {
+        return res.status(201).send({
+            success: true,
+            message,
+            data
+        });
+    },
+
+    error(res: any, message = "Something went wrong", status = 500) {
+        return res.status(status).send({
+            success: false,
+            message
+        });
+    }
 };
 ```
 
@@ -2743,13 +2702,13 @@ export const initDB = async () => {
 // src/modules/todo/todo.types.ts
 
 export type Create = {
-    title: string,
-    content: string
+    name: string,
+    description: string
 }
 
 export type Update = {
-    title?: string,
-    content?: string
+    name?: string,
+    description?: string
 }
 ```
 
@@ -2761,10 +2720,10 @@ import { Create, Update } from "./todo.types.js";
 
 export const todoServices = {
     async create(car: Create) {
-        const { title, content } = car
+        const { name, description } = car
         const result = await pool.query(
-            "INSERT INTO notes (title, content) VALUES($1, $2) RETURNING *",
-            [title, content]
+            "INSERT INTO notes (name, description) VALUES($1, $2) RETURNING *",
+            [name, description]
         );
         return result
     },
@@ -2783,30 +2742,31 @@ export const todoServices = {
     },
 
     async updateOne(id: string, data: Update) {
-        const { title, content } = data;
+        const { name, description } = data;
         const result = await pool.query(
             `UPDATE notes 
-             SET title = COALESCE($1, title), 
-                 content = COALESCE($2, content) 
+             SET 
+                name = COALESCE($1, name), 
+                description = COALESCE($2, description) 
              WHERE id = $3 
              RETURNING *`,
-            [title ?? null, content ?? null, id]
+            [name ?? null, description ?? null, id]
         );
         return result;
     },
 
     async replaceOne(id: string, data: Update) {
-        const { title, content } = data;
+        const { name, description } = data;
 
         const result = await pool.query(
-            `INSERT INTO notes (id, title, content)
+            `INSERT INTO notes (id, name, description)
              VALUES ($1, $2, $3)
              ON CONFLICT (id)
              DO UPDATE SET 
-                title = EXCLUDED.title, 
-                content = EXCLUDED.content
+                name = EXCLUDED.name, 
+                description = EXCLUDED.description
              RETURNING *`,
-            [id, title, content]
+            [id, name, description]
         );
         return result;
     },
@@ -2827,25 +2787,26 @@ export const todoServices = {
 import { Request, Response } from "express"
 import { todoServices } from "./todo.services.js"
 import { Update } from "./todo.types.js"
+import { apiResponse } from "../../utils/apiResponse.js"
 
 export const todoControllers = {
     async createTodo(req: Request, res: Response) {
         try {
             const result = await todoServices.create(req.body)
-            res.send(result.rows[0])
+            return apiResponse.created(res, result.rows[0], "Note created");
         }
         catch (err: any) {
-            res.status(500).send({ message: err.message })
+            return apiResponse.error(res, err.message);
         }
     },
 
     async findAllTodo(req: Request, res: Response) {
         try {
             const result = await todoServices.findAll()
-            res.send(result.rows)
+            return apiResponse.success(res, result.rows, "Todos fetched");
         }
         catch (err: any) {
-            res.status(500).send({ message: err.message })
+            return apiResponse.error(res, err.message);
         }
     },
 
@@ -2853,41 +2814,36 @@ export const todoControllers = {
         try {
             const id = req.params.id as string
             const result = await todoServices.findOne(id)
-
-            if (result.rows.length === 0) {
-                return res.status(404).send({ message: "Not found" })
-            }
-
-            res.send(result.rows[0])
+            return apiResponse.success(res, result.rows[0], "Todo fetched")
         }
         catch (err: any) {
-            res.status(500).send({ message: err.message })
+            return apiResponse.error(res, err.message);
         }
     },
 
     async updateOneTodo(req: Request, res: Response) {
         try {
             const id = req.params.id as string
-            const { title, content } = req.body
-            const updatedData: Update = { title, content }
+            const { name, description } = req.body
+            const updatedData: Update = { name, description }
             const result = await todoServices.updateOne(id, updatedData)
-            res.send(result.rows[0])
+            return apiResponse.success(res, result.rows[0], "Todo updated");
         }
         catch (err: any) {
-            res.status(500).send({ message: err.message })
+            return apiResponse.error(res, err.message);
         }
     },
 
     async replaceOneTodo(req: Request, res: Response) {
         try {
             const id = req.params.id as string
-            const { title, content } = req.body
-            const updatedData: Update = { title, content }
+            const { name, description } = req.body
+            const updatedData: Update = { name, description }
             const result = await todoServices.replaceOne(id, updatedData)
-            res.send(result.rows[0])
+            return apiResponse.success(res, result.rows[0], "Todo replaced");
         }
         catch (err: any) {
-            res.status(500).send({ message: err.message })
+            return apiResponse.error(res, err.message);
         }
     },
 
@@ -2895,10 +2851,10 @@ export const todoControllers = {
         try {
             const id = req.params.id as string
             const result = await todoServices.deleteOne(id)
-            res.send(result.rows[0])
+            return apiResponse.success(res, result.rows[0], "Todo deleted");
         }
         catch (err: any) {
-            res.status(500).send({ message: err.message })
+            return apiResponse.error(res, err.message);
         }
     }
 }
@@ -2938,16 +2894,16 @@ initDB()
 
 app.use("/todos", todoRoutes)
 
+app.get("/", (req: Request, res: Response) => {
+    res.send("Hello Express!");
+});
+
 app.use((req: Request, res: Response) => {
     res.status(404).send({
         error: "Route Not Found",
         path: req.path
     })
 })
-
-app.get("/", (req: Request, res: Response) => {
-    res.send("Hello Express!");
-});
 
 export default app
 ```
@@ -2965,6 +2921,3 @@ app.listen(port, () => {
 });
 ```
 
-## Example 1:
-
-[Click here to see the code](./express-postgresql-ts-1/)
