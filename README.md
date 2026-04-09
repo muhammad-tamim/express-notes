@@ -28,6 +28,7 @@
 - [Express + PostgreSQL + TS (Modular pattern):](#express--postgresql--ts-modular-pattern)
   - [Setup:](#setup-4)
   - [Example 1:](#example-1-4)
+  - [Example 1:](#example-1-5)
 
 
 # Introduction:
@@ -2568,22 +2569,38 @@ app.listen(port, () => {
 
 ## Setup:
 
-```js
+- step 1: Install all require packages:
+
+```bash
 npm init -y
+```
+
+```bash
 npm i express pg dotenv bcryptjs jsonwebtoken
+```
+
+```bash
 npm i -D typescript tsx
-npm i --save-dev @types/express @types/pg @types/jsonwebtoken
+```
+
+```bash
+npm i --save-dev @types/express @types/pg @types/node @types/jsonwebtoken
+```
+
+```bash
 tsc --init
 ```
 
-```js
+- step 2: Modify tsconfig.json and package.json:
+
+```json
 // tsconfig.json
 {
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-    "rootDir": "./src",
-    "outDir": "./dist",
+    "rootDir": "./src", // un-comment it
+    "outDir": "./dist", // un-comment it
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "nodenext",
@@ -2601,16 +2618,16 @@ tsc --init
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     // Style Options
-    "noImplicitReturns": true,
-    "noImplicitOverride": true,
+    // "noImplicitReturns": true,
+    // "noImplicitOverride": true,
     // "noUnusedLocals": true,
     // "noUnusedParameters": true,
     // "noFallthroughCasesInSwitch": true,
     // "noPropertyAccessFromIndexSignature": true,
     // Recommended Options
     "strict": true,
-    // "jsx": "react-jsx",
-    // "verbatimModuleSyntax": true,
+    // "jsx": "react-jsx", // comment it
+    // "verbatimModuleSyntax": true, // comment it
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
@@ -2619,15 +2636,16 @@ tsc --init
 }
 ```
 
-```js
+```json
 // package.json
+
 {
-  "name": "module-12",
+  "name": "express-ts-postgress",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./src/server.ts", // add where our main server file exist
   "scripts": {
-    "dev": "npx tsx watch ./src/server.ts",
+    "dev": "npx tsx watch ./src/server.ts", // add npm run dev script
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -2635,20 +2653,316 @@ tsc --init
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "bcryptjs": "^3.0.3",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.4.1",
     "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
-    "pg": "^8.16.3"
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/pg": "^8.15.6",
+    "@types/node": "^25.5.2",
+    "@types/pg": "^8.20.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   }
 }
+```
+
+- step 3: create project on neonDB and add neonDB connection string to env file: 
+
+```js
+// .env
+CONNECTION_STR=postgresql://neondb_owner:npg_CnF5zJxqcI2k@ep-soft-paper-ant6m8do-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+port=3000
+```
+
+## Example 1: 
+
+```js
+src/
+│
+├── config/
+│ ├── db.ts 
+│ └── env.ts 
+│
+├── modules/
+│ └── todo/
+│ ├── todo.controllers.ts # Handles HTTP requests & responses
+│ ├── todo.routes.ts # Defines API routes
+│ ├── todo.services.ts # Business logic & DB queries
+│ └── todo.types.ts # TypeScript types
+│
+├── app.ts # Express app configuration (middlewares, routes)
+└── server.ts # Server entry point (listen on port)
+```
+
+```js
+// src/config/env.ts
+
+import dotenv from "dotenv"
+// import path from "path"
+
+
+dotenv.config()
+
+// or
+// dotenv.config({ path: path.join(process.cwd(), ".env") })
+// console.log(process.cwd())
+// /home/muhammad-tamim/programming/programming hero/lavel-2/module-12
+// console.log(path.join(process.cwd(), '.env'))
+// /home/muhammad-tamim/programming/programming hero/lavel-2/module-12/.env
+
+
+
+const config = {
+    connection_str: process.env.CONNECTION_STR,
+    port: process.env.PORT,
+}
+
+export default config
+```
+
+```js
+// src/config/db.ts
+import { Pool } from "pg";
+import config from "./env.js";
+
+export const pool = new Pool({ connectionString: config.connection_str });
+
+export const initDB = async () => {
+    await pool.query(`
+    CREATE TABLE IF NOT EXISTS notes (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL
+    )
+  `);
+};
+```
+
+```ts
+// src/modules/todo/todo.types.ts
+
+export type Create = {
+    title: string,
+    content: string
+}
+
+export type Update = {
+    title?: string,
+    content?: string
+}
+```
+
+```js
+// src/modules/todo/todo.services.ts
+
+import { pool } from "../../config/db.js";
+import { Create, Update } from "./todo.types.js";
+
+export const todoServices = {
+    async create(car: Create) {
+        const { title, content } = car
+        const result = await pool.query(
+            "INSERT INTO notes (title, content) VALUES($1, $2) RETURNING *",
+            [title, content]
+        );
+        return result
+    },
+
+    async findAll() {
+        const result = await pool.query("SELECT * FROM notes");
+        return result;
+    },
+
+    async findOne(id: string) {
+        const result = await pool.query(
+            "SELECT * FROM notes WHERE id = $1",
+            [id]
+        );
+        return result;
+    },
+
+    async updateOne(id: string, data: Update) {
+        const { title, content } = data;
+        const result = await pool.query(
+            `UPDATE notes 
+             SET title = COALESCE($1, title), 
+                 content = COALESCE($2, content) 
+             WHERE id = $3 
+             RETURNING *`,
+            [title ?? null, content ?? null, id]
+        );
+        return result;
+    },
+
+    async replaceOne(id: string, data: Update) {
+        const { title, content } = data;
+
+        const result = await pool.query(
+            `INSERT INTO notes (id, title, content)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (id)
+             DO UPDATE SET 
+                title = EXCLUDED.title, 
+                content = EXCLUDED.content
+             RETURNING *`,
+            [id, title, content]
+        );
+        return result;
+    },
+
+    async deleteOne(id: string) {
+        const result = await pool.query(
+            "DELETE FROM notes WHERE id = $1 RETURNING *",
+            [id]
+        );
+        return result;
+    }
+}
+```
+
+```ts
+// src/modules/todo/todo.controllers.ts
+
+import { Request, Response } from "express"
+import { todoServices } from "./todo.services.js"
+import { Update } from "./todo.types.js"
+
+export const todoControllers = {
+    async createTodo(req: Request, res: Response) {
+        try {
+            const result = await todoServices.create(req.body)
+            res.send(result.rows[0])
+        }
+        catch (err: any) {
+            res.status(500).send({ message: err.message })
+        }
+    },
+
+    async findAllTodo(req: Request, res: Response) {
+        try {
+            const result = await todoServices.findAll()
+            res.send(result.rows)
+        }
+        catch (err: any) {
+            res.status(500).send({ message: err.message })
+        }
+    },
+
+    async findOneTodo(req: Request, res: Response) {
+        try {
+            const id = req.params.id as string
+            const result = await todoServices.findOne(id)
+
+            if (result.rows.length === 0) {
+                return res.status(404).send({ message: "Not found" })
+            }
+
+            res.send(result.rows[0])
+        }
+        catch (err: any) {
+            res.status(500).send({ message: err.message })
+        }
+    },
+
+    async updateOneTodo(req: Request, res: Response) {
+        try {
+            const id = req.params.id as string
+            const { title, content } = req.body
+            const updatedData: Update = { title, content }
+            const result = await todoServices.updateOne(id, updatedData)
+            res.send(result.rows[0])
+        }
+        catch (err: any) {
+            res.status(500).send({ message: err.message })
+        }
+    },
+
+    async replaceOneTodo(req: Request, res: Response) {
+        try {
+            const id = req.params.id as string
+            const { title, content } = req.body
+            const updatedData: Update = { title, content }
+            const result = await todoServices.replaceOne(id, updatedData)
+            res.send(result.rows[0])
+        }
+        catch (err: any) {
+            res.status(500).send({ message: err.message })
+        }
+    },
+
+    async deleteOneTodo(req: Request, res: Response) {
+        try {
+            const id = req.params.id as string
+            const result = await todoServices.deleteOne(id)
+            res.send(result.rows[0])
+        }
+        catch (err: any) {
+            res.status(500).send({ message: err.message })
+        }
+    }
+}
+```
+
+```ts
+// src/modules/todo/todo.routes.ts
+
+
+import { Router } from "express";
+import { todoControllers } from "./todo.controllers.js";
+
+const router = Router()
+
+router.post("/", todoControllers.createTodo)
+router.get("/", todoControllers.findAllTodo)
+router.get("/:id", todoControllers.findOneTodo)
+router.patch("/:id", todoControllers.updateOneTodo)
+router.put("/:id", todoControllers.replaceOneTodo)
+router.delete("/:id", todoControllers.deleteOneTodo)
+
+export const todoRoutes = router
+```
+
+```ts
+// src/app.ts
+
+import express, { Request, Response } from "express";
+import { initDB } from "./config/db.js";
+import { todoRoutes } from "./modules/todo/todo.routes.js";
+
+const app = express();
+app.use(express.json());
+
+initDB()
+
+
+app.use("/todos", todoRoutes)
+
+app.use((req: Request, res: Response) => {
+    res.status(404).send({
+        error: "Route Not Found",
+        path: req.path
+    })
+})
+
+app.get("/", (req: Request, res: Response) => {
+    res.send("Hello Express!");
+});
+
+export default app
+```
+
+```ts
+// src/server.ts
+
+import app from "./app.js";
+import config from "./config/env.js";
+
+const port = config.port || 3000;
+
+app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+});
 ```
 
 ## Example 1:
