@@ -1,36 +1,38 @@
 <h1 align="center">Express.js Notes</h1>
 
+- [Setup:](#setup)
 - [Introduction:](#introduction)
+  - [How a api code works:](#how-a-api-code-works)
+  - [Difference Between req.body, req.params and req.query:](#difference-between-reqbody-reqparams-and-reqquery)
   - [Routing:](#routing)
     - [Route parameters:](#route-parameters)
     - [Query Parameters:](#query-parameters)
-  - [Difference Between req.body, req.params and req.query:](#difference-between-reqbody-reqparams-and-reqquery)
+  - [Difference Between req.body, req.params and req.query:](#difference-between-reqbody-reqparams-and-reqquery-1)
   - [Middleware:](#middleware)
   - [Sending Response:](#sending-response)
   - [Router:](#router)
   - [Route chaining:](#route-chaining)
   - [Serving static files:](#serving-static-files)
 - [Express + MongoDB:](#express--mongodb)
-  - [setup:](#setup)
+  - [setup:](#setup-1)
   - [Example 1:](#example-1)
   - [Example 2:](#example-2)
 - [Express + MongoDB + TS:](#express--mongodb--ts)
-  - [Setup:](#setup-1)
+  - [Setup:](#setup-2)
   - [Example 1:](#example-1-1)
 - [Express + MongoDB + TS + Zod (Modeller Pattern):](#express--mongodb--ts--zod-modeller-pattern)
-  - [Setup:](#setup-2)
+  - [Setup:](#setup-3)
   - [Example 1:](#example-1-2)
   - [Example 2:](#example-2-1)
 - [Express + PostgreSQL + TS:](#express--postgresql--ts)
-  - [Setup:](#setup-3)
+  - [Setup:](#setup-4)
   - [Example 1:](#example-1-3)
 - [Express + PostgreSQL + TS (Modular pattern):](#express--postgresql--ts-modular-pattern)
-  - [Setup:](#setup-4)
+  - [Setup:](#setup-5)
   - [Example 1:](#example-1-4)
 
 
-# Introduction:
-Express.js is a minimal, flexible and fast web framework for Node.js. It makes building APIs and web servers much easier than using the raw http module.
+# Setup:
 
 **Setup:** 
 ```js
@@ -53,6 +55,114 @@ app.get("/", (req, res) => {
 // Start server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
+});
+```
+
+# Introduction:
+Express.js is a minimal, flexible and fast web framework for Node.js. It makes building APIs and web servers much easier than using the raw http module.
+
+## How a api code works:
+
+```js
+// express
+app.post('/users', async (req, res) => {
+    const user = req.body;
+    const result = await usersCollection.insertOne(user);
+    res.send(result); 
+});
+```
+
+here,
+- `app.post('/users'.......)`: 
+  - `app` is a variable that contains express object (const app = express()).
+  - `.post()` is a methods of the app object
+  - `'/users'` is a endPoint(URL path). When the client sends a POST request to /users, this code runs.
+
+- `async/await`: 
+  - `async` marks the function as asynchronous so you can use await inside it.
+  - `await` works same like .then(), it's pause the async function until the promise if resolved.
+  
+- `(req, res) => {...}`: this is a anonymous arrow function that contains two parameters: 
+  - req = request object containing data from the client (req.body, req.params, req.query)
+  - res = response object used to send data back to the client (res.json(), res.send(), res.status())
+
+so we can do the same things using .then():
+
+```js
+app.post('/users', (req, res) => {
+    const user = req.body;
+    usersCollection.insertOne(user)
+    .then(result => res.send(result))
+});
+
+```
+
+**Note:**
+
+In the frontend we need two .then(), because fetch() returns a response object, and you must convert it using .json() before using in the your code.
+
+```js
+fetch('api')
+.then(res => res.json())
+.then(data => console.log(data))
+```
+
+But in mongodb methods are already return js object when their promises resolve. So inside express we don't need to use res.json(), we can directly send the object using res.send().
+
+
+## Difference Between req.body, req.params and req.query:
+
+- req.body → used when we need requested body info:
+
+Frontend:
+
+```js
+fetch('http://localhost:3000/users', {
+  method: 'POST',
+  headers: { 
+    'content-type': 'application/json' 
+  },
+  body: JSON.stringify({ name: "Tamim", email: "a@a.com" })
+})
+```
+
+Backend: 
+
+```js
+app.post('/users', async (req, res) => {
+    const newUser = req.body;
+    console.log(newUser) // { name: "Tamim", email: "a@a.com" }
+    const result = await usersCollection.insertOne(newUser);
+    res.send(result); 
+});
+```
+
+- req.params → used when we need requested url dynamic url path:
+
+```js
+app.get('/users/:id', async (req, res) => {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const result = await usersCollection.findOne(query);
+    res.send(result);
+});
+```
+
+- req.query → used when we need requested url part after ?
+
+```js
+app.get('/users', async (req, res) => {
+    const page = parseInt(req.query.page); // http://localhost:3000/users?page=${page}
+    const limit = 5;
+    const skip = (page - 1) * limit;
+
+    const result = await usersCollection
+        .find()
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+
+    res.send(result);
 });
 ```
 
