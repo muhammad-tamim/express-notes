@@ -30,6 +30,9 @@
 - [Express + PostgreSQL + TS (Modular pattern):](#express--postgresql--ts-modular-pattern)
   - [Setup:](#setup-5)
   - [Example 1:](#example-1-4)
+- [Express + PostgreSQL + Prisma + Ts:](#express--postgresql--prisma--ts)
+  - [Setup:](#setup-6)
+  - [Example:](#example)
 
 
 # Setup:
@@ -3031,3 +3034,354 @@ app.listen(port, () => {
 });
 ```
 
+# Express + PostgreSQL + Prisma + Ts: 
+## Setup: 
+- Step 1: Install dependencies
+
+```bash
+npm init -y
+npm i express pg dotenv @prisma/client @prisma/adapter-pg
+npm i -D typescript tsx prisma @types/node @types/express @types/pg 
+npx tsc --init
+```
+
+here, 
+  - prisma - The Prisma CLI for running commands like prisma init, prisma migrate, and prisma generate
+  - @prisma/client - The Prisma Client library for querying your database
+  - @prisma/adapter-pg - The node-postgres driver adapter that connects Prisma Client to your database
+
+
+- Step 2: Configure ESM support: 
+
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2023",
+    "strict": true,
+    "esModuleInterop": true,
+    "ignoreDeprecations": "6.0"
+  }
+}
+```
+
+```json
+// package.json
+{
+  "type": "module"
+}
+"scripts": {
+    "dev": "tsx watch ./index.ts",
+    "build": "tsc",
+    "start": "node ./dist/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+},
+```
+
+- Step 3:  Initialize Prisma ORM: 
+
+```bash
+npx prisma init --datasource-provider postgresql --output ../generated/prisma
+```
+
+This command does a few things:
+  - Creates a prisma/ directory with a schema.prisma file containing your database connection and schema models
+  - Creates a .env file in the root directory for environment variables
+  - Creates a prisma.config.ts file for Prisma configuration 
+
+- Step 4: update env file with database connection string: 
+
+```js
+DATABASE_URL="postgresql://username:password@localhost:5432/mydb?schema=public"
+```
+
+- Step 5: Define data model: 
+
+Open prisma/schema.prisma and add the following models:
+
+```js
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User { 
+  id    Int     @id @default(autoincrement()) 
+  name  String?
+  email String  @unique
+} 
+```
+
+- step 6: Create and apply your first migration: 
+
+Create and apply your first migration
+
+```bash
+npx prisma migrate dev --name init
+```
+
+This command creates the database tables based on your schema. Now run the following command to generate the Prisma Client:
+
+```bash
+npx prisma generate
+```
+
+- Step 7: Instantiate Prisma Client: 
+
+Now that you have all the dependencies installed, you can instantiate Prisma Client. You need to pass an instance of the Prisma ORM driver adapter adapter to the PrismaClient constructor:
+
+```js
+// lib/prisma.ts
+import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../generated/prisma/client";
+
+const connectionString = `${process.env.DATABASE_URL}`;
+
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
+
+export { prisma };
+```
+
+- step 8: use this boilerplate code to test setup: 
+
+```ts
+import express, { Request, Response } from "express";
+import dotenv from "dotenv";
+import path from "path";
+import { prisma } from "./lib/prisma";
+
+dotenv.config({ path: path.join(process.cwd(), ".env") });
+
+const app = express();
+app.use(express.json());
+
+const port = process.env.PORT || 3000;
+
+
+app.get("/", (req: Request, res: Response) => {
+    res.send("Prisma + PostgreSQL + TypeScript API is running!");
+});
+
+
+
+/*
+add all crud routes here
+*/
+
+
+
+app.use((req: Request, res: Response) => {
+    res.status(404).send({
+        error: "Route not found",
+        path: req.path,
+    });
+});
+
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
+```
+
+step 9: We can explore our data with Prisma Studio
+
+```bash
+npx prisma studio
+```
+
+## Example: 
+
+```ts
+import express, { Request, Response } from "express";
+import dotenv from "dotenv";
+import path from "path";
+import { prisma } from "./lib/prisma";
+
+dotenv.config({ path: path.join(process.cwd(), ".env") });
+
+const app = express();
+app.use(express.json());
+
+const port = process.env.PORT || 3000;
+
+/**
+ * CREATE user
+ */
+app.post("/users", async (req: Request, res: Response) => {
+    try {
+
+        const user = await prisma.user.create({ data: req.body });
+
+        res.status(201).send({
+            success: true,
+            message: "User created",
+            data: user,
+        });
+
+    } catch (error: any) {
+        res.status(500).send({
+            success: false,
+            message: error.message,
+        });
+    }
+});
+
+/**
+ * GET all users
+ */
+app.get("/users", async (_req: Request, res: Response) => {
+    try {
+        const users = await prisma.user.findMany();
+
+        res.send({
+            success: true,
+            message: "Users fetched",
+            data: users,
+        });
+
+    } catch (error: any) {
+        res.status(500).send({
+            success: false,
+            message: error.message,
+        });
+    }
+});
+
+/**
+ * GET single user by ID
+ */
+app.get("/users/:id", async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+
+        const user = await prisma.user.findUnique({
+            where: { id },
+        });
+
+        if (!user) {
+            return res.status(404).send({
+                success: false,
+                message: "User not found",
+            });
+        }
+
+        res.send({
+            success: true,
+            message: "User fetched",
+            data: user,
+        });
+
+    } catch (error: any) {
+        res.status(500).send({
+            success: false,
+            message: error.message,
+        });
+    }
+});
+
+/**
+ * PATCH - partial update
+ */
+app.patch("/users/:id", async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        const { name, email } = req.body;
+
+        const user = await prisma.user.update({
+            where: { id },
+            data: {
+                ...(name !== undefined && { name }),
+                ...(email !== undefined && { email }),
+            },
+        });
+
+        res.send({
+            success: true,
+            message: "User updated",
+            data: user,
+        });
+
+    } catch (error: any) {
+        res.status(500).send({
+            success: false,
+            message: error.message,
+        });
+    }
+});
+
+/**
+ * PUT - full replace (UPSERT)
+ */
+app.put("/users/:id", async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        const { name, email } = req.body;
+
+        const user = await prisma.user.upsert({
+            where: { id },
+            update: { name, email },
+            create: { id, name, email },
+        });
+
+        res.send({
+            success: true,
+            message: "User replaced",
+            data: user,
+        });
+
+    } catch (error: any) {
+        res.status(500).send({
+            success: false,
+            message: error.message,
+        });
+    }
+});
+
+/**
+ * DELETE user
+ */
+app.delete("/users/:id", async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+
+        const user = await prisma.user.delete({
+            where: { id },
+        });
+
+        res.send({
+            success: true,
+            message: "User deleted",
+            data: user,
+        });
+
+    } catch (error: any) {
+        res.status(404).send({
+            success: false,
+            message: "User not found",
+        });
+    }
+});
+
+app.get("/", (_req: Request, res: Response) => {
+    res.send("Prisma + PostgreSQL + TypeScript API is running!");
+});
+
+app.use((req: Request, res: Response) => {
+    res.status(404).send({
+        error: "Route not found",
+        path: req.path,
+    });
+});
+
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
+```
