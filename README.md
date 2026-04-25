@@ -33,6 +33,9 @@
 - [Express + PostgreSQL + Prisma + Ts:](#express--postgresql--prisma--ts)
   - [Setup:](#setup-6)
   - [Example:](#example)
+- [Express + PostgreSQL + Prisma + Ts (Modular Pattern):](#express--postgresql--prisma--ts-modular-pattern)
+  - [Setup:](#setup-7)
+  - [Example:](#example-1)
 
 
 # Setup:
@@ -3383,5 +3386,457 @@ app.use((req: Request, res: Response) => {
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
+});
+```
+
+# Express + PostgreSQL + Prisma + Ts (Modular Pattern): 
+## Setup: 
+- Step 1: Install dependencies
+
+```bash
+npm init -y
+npm i express pg dotenv cors @prisma/client @prisma/adapter-pg
+npm i -D typescript tsx prisma @types/node @types/express @types/pg @types/cors 
+npx tsc --init
+```
+
+- Step 2: Modify tsconfig.json and package.json:
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "module": "esnext",
+    "target": "es2023",
+    "types": [
+      "node"
+    ],
+    "lib": [
+      "esnext"
+    ],
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "strict": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+    "ignoreDeprecations": "6.0",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+  },
+  "include": [
+    "src/**/*",
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
+```
+
+```json
+{
+  "name": "prisma-8",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch ./src/server.ts",
+    "build": "tsc",
+    "start": "node ./dist/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.6.0",
+    "@types/pg": "^8.20.0",
+    "prisma": "^7.8.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}
+
+```
+
+- Step 3:  Initialize Prisma ORM: 
+
+```bash
+npx prisma init --datasource-provider postgresql --output ../generated/prisma
+```
+
+- Step 4: update env file with database connection string: 
+
+```js
+DATABASE_URL="postgresql://username:password@localhost:5432/mydb?schema=public"\
+// DATABASE_URL="postgresql://postgres:hello@localhost:5432/test?schema=public"
+// port=3000
+```
+
+- Step 5: Define data model: 
+
+```js
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Note {
+  id          Int    @id @default(autoincrement())
+  name        String
+  description String
+}
+```
+
+- step 6: Create and apply your first migration: 
+
+```bash
+npx prisma migrate dev --name init
+npx prisma generate
+```
+
+- Step 7: Instantiate Prisma Client: 
+
+Now that you have all the dependencies installed, you can instantiate Prisma Client. You need to pass an instance of the Prisma ORM driver adapter adapter to the PrismaClient constructor:
+
+```js
+// src/lib/prisma.ts
+
+import { PrismaPg } from "@prisma/adapter-pg";
+import config from "../config/env";
+import { PrismaClient } from "../generated/prisma/client";
+
+const connectionString = config.databaseUrl;
+
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
+
+export { prisma };
+```
+
+step 8: We can explore our data with Prisma Studio
+
+```bash
+npx prisma studio
+```
+
+## Example: 
+
+```
+node_modules
+prisma/
+    schema.prisma
+src/
+    config/
+        env.ts
+    generated
+    lib/
+        prisma.ts
+    modules/
+        notes/ 
+            note.types.ts
+            note.services.ts
+            note.controllers.ts
+            note.routes.ts
+    utils/
+        apiResponse.ts
+    app.ts
+    server.ts
+```
+
+```ts
+// src/config/env.ts
+
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const config = {
+    port: process.env.PORT || "3000",
+    databaseUrl: process.env.DATABASE_URL,
+};
+
+export default config;
+```
+
+```ts
+// src/lib/prisma.ts
+
+import { PrismaPg } from "@prisma/adapter-pg";
+import config from "../config/env";
+import { PrismaClient } from "../generated/prisma/client";
+
+const connectionString = config.databaseUrl;
+
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
+
+export { prisma };
+```
+
+```ts
+// src/utils/apiResponse.ts
+
+export const apiResponse = {
+    success(res: any, data: any, message = "OK") {
+        return res.status(200).send({
+            success: true,
+            message,
+            data
+        });
+    },
+
+    created(res: any, data: any, message = "Created") {
+        return res.status(201).send({
+            success: true,
+            message,
+            data
+        });
+    },
+
+    error(res: any, message = "Something went wrong", status = 500) {
+        return res.status(status).send({
+            success: false,
+            message
+        });
+    }
+};
+```
+
+```ts
+// src/modules/note/note.types.ts
+
+export type CreateNote = {
+    name: string;
+    description: string;
+};
+
+export type UpdateNote = {
+    name?: string;
+    description?: string;
+};
+```
+
+```ts
+// src/modules/note/note.services.ts
+
+import { prisma } from "../../lib/prisma.js";
+import { CreateNote, UpdateNote } from "./note.types.js";
+
+export const noteServices = {
+    create(data: CreateNote) {
+        return prisma.note.create({ data });
+    },
+
+    findAll() {
+        return prisma.note.findMany();
+    },
+
+    findOne(id: number) {
+        return prisma.note.findUnique({ where: { id } });
+    },
+
+    updateOne(id: number, data: UpdateNote) {
+        return prisma.note.update({
+            where: { id },
+            data,
+        });
+    },
+
+    replaceOne(id: number, data: CreateNote) {
+        return prisma.note.upsert({
+            where: { id },
+            update: data,
+            create: { id, ...data },
+        });
+    },
+
+    deleteOne(id: number) {
+        return prisma.note.delete({
+            where: { id },
+        });
+    },
+};
+```
+
+```ts
+// src/modules/note/note.controllers.ts
+
+import { Request, Response } from "express";
+import { apiResponse } from "../../utils/apiResponse";
+import { noteServices } from "./note.controllers";
+
+export const noteControllers = {
+    async create(req: Request, res: Response) {
+        try {
+            const result = await noteServices.create(req.body);
+            return apiResponse.created(res, result, "Note created");
+        } catch (err: any) {
+            return apiResponse.error(res, err.message);
+        }
+    },
+
+    async findAll(_req: Request, res: Response) {
+        try {
+            const result = await noteServices.findAll();
+            return apiResponse.success(res, result, "Notes retrieved");
+        } catch (err: any) {
+            return apiResponse.error(res, err.message);
+        }
+    },
+
+    async findOne(req: Request, res: Response) {
+        try {
+            const id = Number(req.params.id);
+            const result = await noteServices.findOne(id);
+            return apiResponse.success(res, result, "Note retrieved");
+        } catch (err: any) {
+            return apiResponse.error(res, err.message);
+        }
+    },
+
+    async update(req: Request, res: Response) {
+        try {
+            const id = Number(req.params.id);
+            const result = await noteServices.updateOne(id, req.body);
+            return apiResponse.success(res, result, "Note updated");
+        } catch (err: any) {
+            return apiResponse.error(res, err.message);
+        }
+    },
+
+    async replace(req: Request, res: Response) {
+        try {
+            const id = Number(req.params.id);
+            const result = await noteServices.replaceOne(id, req.body);
+            return apiResponse.success(res, result, "Note replaced");
+        } catch (err: any) {
+            return apiResponse.error(res, err.message);
+        }
+    },
+
+    async delete(req: Request, res: Response) {
+        try {
+            const id = Number(req.params.id);
+            const result = await noteServices.deleteOne(id);
+            return apiResponse.success(res, result, "Note deleted");
+        } catch (err: any) {
+            return apiResponse.error(res, err.message);
+        }
+    },
+};
+```
+
+
+```ts
+// src/modules/note/note.routes.ts
+
+import { Router } from "express";
+import { noteControllers } from "./note.services";
+
+const router = Router();
+
+router.post("/", noteControllers.create);
+router.get("/", noteControllers.findAll);
+router.get("/:id", noteControllers.findOne);
+router.patch("/:id", noteControllers.update);
+router.put("/:id", noteControllers.replace);
+router.delete("/:id", noteControllers.delete);
+
+export const noteRoutes = router;
+```
+
+```ts
+// src/app.ts
+
+import express, { Request, Response } from "express";
+import cors from "cors";
+import { noteRoutes } from "./modules/note/note.routes";
+
+const app = express();
+app.use(express.json());
+
+app.use(cors({
+    origin: "*", // change this in production
+    credentials: true,
+})
+);
+
+app.use("/notes", noteRoutes);
+
+app.get("/", (_req: Request, res: Response) => {
+    res.send("Hello Prisma!");
+});
+
+app.use((req: Request, res: Response) => {
+    res.status(404).send({
+        error: "Route Not Found",
+        path: req.path,
+    });
+});
+
+export default app;
+```
+
+```ts
+// src/server.ts
+
+import app from "./app.js";
+import config from "./config/env.js";
+import { prisma } from "./lib/prisma.js";
+
+const port = Number(config.port) || 3000;
+
+async function startServer() {
+    try {
+        await prisma.$connect();
+        console.log("Connected to the database successfully.");
+
+        app.listen(port, () => {
+            console.log(`Server is running on http://localhost:${port}`);
+        });
+    } catch (error) {
+        console.error("An error occurred:", error);
+        await prisma.$disconnect();
+        process.exit(1);
+    }
+}
+
+startServer()
+```
+
+```js
+// simplified
+
+import app from "./app.js";
+import config from "./config/env.js";
+
+const port = Number(config.port) || 3000;
+
+
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
 });
 ```
