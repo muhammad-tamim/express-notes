@@ -32,10 +32,10 @@
   - [Example 1:](#example-1-4)
 - [Express + PostgreSQL + Prisma + Ts:](#express--postgresql--prisma--ts)
   - [Setup:](#setup-6)
-  - [Example:](#example)
+  - [Example 1:](#example-1-5)
 - [Express + PostgreSQL + Prisma + Ts (Modular Pattern):](#express--postgresql--prisma--ts-modular-pattern)
   - [Setup:](#setup-7)
-  - [Example:](#example-1)
+  - [Example 1:](#example-1-6)
 
 
 # Setup:
@@ -3200,7 +3200,7 @@ step 9: We can explore our data with Prisma Studio
 npx prisma studio
 ```
 
-## Example: 
+## Example 1: 
 
 ```ts
 import express, { Request, Response } from "express";
@@ -3440,6 +3440,7 @@ npx tsc --init
 ```
 
 ```json
+// package.json
 {
   "name": "prisma-8",
   "version": "1.0.0",
@@ -3542,7 +3543,7 @@ step 8: We can explore our data with Prisma Studio
 npx prisma studio
 ```
 
-## Example: 
+## Example 1:  
 
 ```
 node_modules
@@ -3579,21 +3580,6 @@ const config = {
 };
 
 export default config;
-```
-
-```ts
-// src/lib/prisma.ts
-
-import { PrismaPg } from "@prisma/adapter-pg";
-import config from "../config/env";
-import { PrismaClient } from "../generated/prisma/client";
-
-const connectionString = config.databaseUrl;
-
-const adapter = new PrismaPg({ connectionString });
-const prisma = new PrismaClient({ adapter });
-
-export { prisma };
 ```
 
 ```ts
