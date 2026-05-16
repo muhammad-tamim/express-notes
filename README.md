@@ -30,6 +30,8 @@
 - [Express + PostgreSQL + TS (Modular pattern):](#express--postgresql--ts-modular-pattern)
   - [Setup:](#setup-5)
   - [Example 1:](#example-1-4)
+  - [Example 2:](#example-2-2)
+  - [Example 3:](#example-3)
 - [Express + PostgreSQL + Prisma + Ts:](#express--postgresql--prisma--ts)
   - [Setup:](#setup-6)
   - [Example 1:](#example-1-5)
@@ -2617,21 +2619,8 @@ app.listen(port, () => {
 
 ```bash
 npm init -y
-```
-
-```bash
 npm i express pg dotenv bcryptjs jsonwebtoken
-```
-
-```bash
-npm i -D typescript tsx
-```
-
-```bash
-npm i --save-dev @types/express @types/pg @types/node @types/jsonwebtoken
-```
-
-```bash
+npm i -D typescript tsx @types/express @types/pg @types/node @types/jsonwebtoken @types/cors 
 tsc --init
 ```
 
@@ -3036,6 +3025,13 @@ app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
 });
 ```
+## Example 2: 
+
+https://github.com/tamim-111/level-2-assignment-2
+
+## Example 3: 
+
+https://github.com/muhammad-tamim/web-project-25-server
 
 # Express + PostgreSQL + Prisma + Ts: 
 ## Setup: 
