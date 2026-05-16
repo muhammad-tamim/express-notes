@@ -24,20 +24,23 @@
   - [Setup:](#setup-3)
   - [Example 1:](#example-1-2)
   - [Example 2:](#example-2-1)
-- [Express + PostgreSQL + TS:](#express--postgresql--ts)
+- [Express + Mongoose + JS:](#express--mongoose--js)
   - [Setup:](#setup-4)
   - [Example 1:](#example-1-3)
-- [Express + PostgreSQL + TS (Modular pattern):](#express--postgresql--ts-modular-pattern)
+- [Express + PostgreSQL + TS:](#express--postgresql--ts)
   - [Setup:](#setup-5)
   - [Example 1:](#example-1-4)
+- [Express + PostgreSQL + TS (Modular pattern):](#express--postgresql--ts-modular-pattern)
+  - [Setup:](#setup-6)
+  - [Example 1:](#example-1-5)
   - [Example 2:](#example-2-2)
   - [Example 3:](#example-3)
 - [Express + PostgreSQL + Prisma + Ts:](#express--postgresql--prisma--ts)
-  - [Setup:](#setup-6)
-  - [Example 1:](#example-1-5)
-- [Express + PostgreSQL + Prisma + Ts (Modular Pattern):](#express--postgresql--prisma--ts-modular-pattern)
   - [Setup:](#setup-7)
   - [Example 1:](#example-1-6)
+- [Express + PostgreSQL + Prisma + Ts (Modular Pattern):](#express--postgresql--prisma--ts-modular-pattern)
+  - [Setup:](#setup-8)
+  - [Example 1:](#example-1-7)
 
 
 # Setup:
@@ -2244,6 +2247,205 @@ export const validate = <T>(schema: ZodType<T>) => (req: Request, res: Response,
 
 ## Example 2:
 [Click here to see the project](./express-mongodb-ts-zod-1)
+
+# Express + Mongoose + JS: 
+
+## Setup: 
+- step 1: 
+
+```bash
+npm init -y
+```
+
+- step 2: 
+  
+```bash
+npm i express mongoose nodemon cors dotenv
+```
+
+- step 3: 
+
+```js
+// index.js
+
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+const mongoose = require('mongoose');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+// middleware
+app.use(cors());
+app.use(express.json());
+
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI);
+
+
+// Mongoose Schema + Model
+const userSchema = new mongoose.Schema({
+    name: String,
+    email: String,
+});
+
+const UsersCollection = mongoose.model('User', userSchema);
+
+// all cred operations 
+
+app.get('/', (req, res) => {
+    res.send('Hello World!');
+});
+
+
+// Server Start
+app.listen(port, () => {
+    console.log(`🚀 Server running on port ${port}`);
+});
+```
+
+we can use this function when we works on modular architecture:
+```js
+async function connectDB() {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('✅ MongoDB connected with Mongoose');
+  } catch (error) {
+    console.error('❌ MongoDB connection failed:', error.message);
+    process.exit(1);
+  }
+}
+```
+
+- step 4: 
+
+```json
+{
+  "name": "mongoose",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "mongoose": "^9.3.3",
+    "nodemon": "^3.1.14"
+  }
+}
+```
+
+- step 5:
+
+```
+MONGODB_URI=mongodb://localhost:27017/usersDB
+```
+
+## Example 1: 
+
+```js
+// index.js
+
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+const mongoose = require('mongoose');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+// middleware
+app.use(cors());
+app.use(express.json());
+
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI);
+
+
+// Mongoose Schema + Model
+const userSchema = new mongoose.Schema({
+    name: String,
+    email: String,
+});
+
+const UsersCollection = mongoose.model('User', userSchema);
+
+// all cred operations 
+
+// root
+app.get('/', (req, res) => {
+    res.send('Hello World!');
+});
+
+// CREATE
+app.post('/users', async (req, res) => {
+    const user = req.body
+    const result = await UsersCollection.create(user);
+    res.send(result);
+});
+
+// READ ALL
+app.get('/users', async (req, res) => {
+    const result = await UsersCollection.find()
+    res.send(result)
+})
+
+// READ ONE
+app.get('/users/:id', async (req, res) => {
+    const filter = req.params.id
+    const result = await UsersCollection.findById(filter);
+    res.send(result);
+});
+
+// PATCH UPDATE
+app.patch('/users/:id', async (req, res) => {
+    const filter = req.params.id
+    const { name, email } = req.body
+    const updatedData = { name, email }
+    const updatedDoc = {
+        new: true,
+        runValidators: true
+    }
+    const result = await UsersCollection.findByIdAndUpdate(filter, updatedData, updatedDoc);
+    res.send(result);
+});
+
+// PUT Replace
+app.put('/users/:id', async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: id }
+    const newData = req.body;
+    const result = await usersCollection.replaceOne(filter, newData, {
+        new: true,
+        runValidators: true,
+        upsert: true
+    });
+    res.send(result);
+});
+
+// DELETE
+app.delete('/users/:id', async (req, res) => {
+    const filter = req.params.id
+    const result = await UsersCollection.findByIdAndDelete(filter)
+    res.send(result)
+});
+
+
+// Server Start
+app.listen(port, () => {
+    console.log(`🚀 Server running on port ${port}`);
+});
+```
 
 # Express + PostgreSQL + TS:
 ## Setup:
