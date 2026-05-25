@@ -13,7 +13,7 @@
   - [Router:](#router)
   - [Route chaining:](#route-chaining)
   - [Serving static files:](#serving-static-files)
-- [Express + MongoDB:](#express--mongodb)
+- [Express + MongoDB + JS:](#express--mongodb--js)
   - [setup:](#setup-1)
   - [Example 1:](#example-1)
   - [Example 2:](#example-2)
@@ -37,7 +37,6 @@
   - [Setup:](#setup-7)
   - [Example 1:](#example-1-6)
   - [Example 2:](#example-2-2)
-  - [Example 3:](#example-3)
 - [Express + PostgreSQL + Prisma + Ts:](#express--postgresql--prisma--ts)
   - [Setup:](#setup-8)
   - [Example 1:](#example-1-7)
@@ -516,18 +515,14 @@ app.listen(port, () => {
 
 
 
-# Express + MongoDB:
+# Express + MongoDB + JS:
 
 ## setup:
 
-**step 1:** 
+- **step 1:** 
 
 ```bash
 npm init -y
-```
-**step 2:** 
-
-```bash
 npm i express mongodb nodemon cors dotenv
 ```
 
@@ -537,7 +532,7 @@ Note:
 - dotenv lets us store sensitive data (like MongoDB URI or passwords) in a .env file and access them using process.env, keeping our project secure and preventing secrets from going to GitHub.
 
 
-**step 3:** 
+**step 2:** 
 
 - `"start": "node index.js"`: Many deployment platforms (like Render, Vercel, Railway, Heroku) automatically look for this script and They use this command to run your server., if we don't include it, deployment will fail because the platform doesn't know hot to start your app.
 
@@ -567,7 +562,7 @@ Note:
 }
 ```
 
-**step 4:** 
+**step 3:** 
 
 ```js
 const express = require('express')
@@ -1700,59 +1695,31 @@ export default UpdateUser;
 
 ```bash
 npm init -y
-```
-
-```bash
-npm i express cors mongodb dotenv
-```
-
-```bash
+npm i express mongodb dotenv cors
 npm i -D typescript tsx @types/node @types/express @types/mongodb @types/cors 
-```
-
-```bash
 npx tsc --init
 ```
 
 
 ```json
-// tsconfig.json 
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
-    // File Layout
-    "rootDir": "./", // un-commit it, 
-    "outDir": "./dist", // un-commit it
-    // Environment Settings
-    // See also https://aka.ms/tsconfig/module
+    "rootDir": "./",  
+    "outDir": "./dist", 
     "module": "nodenext",
     "target": "esnext",
-    // For nodejs:
     "lib": [
       "esnext"
     ],
     "types": [
       "node"
     ],
-    // and npm install -D @types/node
-    // Other Outputs
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    // Style Options
-    // "noImplicitReturns": true,
-    // "noImplicitOverride": true,
-    // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noPropertyAccessFromIndexSignature": true,
-    // Recommended Options
     "strict": true,
-    // "jsx": "react-jsx", // commit it
-    // "verbatimModuleSyntax": true, // commit it
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
@@ -1767,7 +1734,7 @@ package.json:
   "name": "zod-backeidn",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "dev": "tsx watch index.ts",
     "build": "tsc",
@@ -1890,56 +1857,38 @@ app.listen(port, () => {
 ```
 MONGODB_URI=mongodb://localhost:27017/
 ```
+
 # Express + MongoDB + TS + Zod:
 
 ## Setup: 
 
 ```bash
 npm init -y
-npm i express cors mongodb dotenv zod
+npm i express mongodb cors dotenv zod
 npm i -D typescript tsx @types/node @types/express @types/mongodb @types/cors 
 npx tsc --init
 ```
 
-
 ```json
 // tsconfig.json 
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
-    // File Layout
     "rootDir": "./", // un-commit it, 
     "outDir": "./dist", // un-commit it
-    // Environment Settings
-    // See also https://aka.ms/tsconfig/module
     "module": "nodenext",
     "target": "esnext",
-    // For nodejs:
     "lib": [
       "esnext"
     ],
     "types": [
       "node"
     ],
-    // and npm install -D @types/node
-    // Other Outputs
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    // Style Options
-    // "noImplicitReturns": true,
-    // "noImplicitOverride": true,
-    // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noPropertyAccessFromIndexSignature": true,
-    // Recommended Options
     "strict": true,
-    // "jsx": "react-jsx", // commit it
-    // "verbatimModuleSyntax": true, // commit it
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
@@ -1948,13 +1897,13 @@ npx tsc --init
 }
 ```
 
-package.json:
 ```json
+// package.json:
 {
   "name": "zod-backeidn",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "dev": "tsx watch index.ts",
     "build": "tsc",
@@ -2119,55 +2068,27 @@ app.listen(port, () => {
 
 ```bash
 npm init -y
-```
-
-```bash
-npm i express cors mongodb zod dotenv
-```
-
-```bash
-npm i -D typescript tsx @types/express @types/cors @types/mongodb
-```
-
-```bash
+npm i express mongodb cors zod dotenv
+npm i -D typescript tsx @types/node @types/express @types/mongodb @types/cors 
 npx tsc --init
 ```
 
 ```json
 // tsconfig.json:
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
-    // File Layout
-    "rootDir": "./src", // uncomment it
-    "outDir": "./dist", // uncomment it
-    // Environment Settings
-    // See also https://aka.ms/tsconfig/module
+    "rootDir": "./src", 
+    "outDir": "./dist", 
     "module": "nodenext",
     "target": "esnext",
-    "types": [],
-    // For nodejs:
-    // "lib": ["esnext"],
-    // "types": ["node"],
-    // and npm install -D @types/node
-    // Other Outputs
+    "lib": ["esnext"],
+    "types": ["node"],
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    // Style Options
-    // "noImplicitReturns": true,
-    // "noImplicitOverride": true,
-    // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noPropertyAccessFromIndexSignature": true,
-    // Recommended Options
     "strict": true,
-    // "jsx": "react-jsx", // comment ti
-    // "verbatimModuleSyntax": true, // comment it
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
@@ -2182,7 +2103,7 @@ npx tsc --init
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./src/server.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
@@ -2480,12 +2401,34 @@ export const validate = <T>(schema: ZodType<T>) => (req: Request, res: Response,
 
 ```bash
 npm init -y
+npm i express mongoose nodemon cors dotenv
 ```
 
-- step 2: 
-  
-```bash
-npm i express mongoose nodemon cors dotenv
+- step 2:
+
+```json
+{
+  "name": "mongoose",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "mongoose": "^9.3.3",
+    "nodemon": "^3.1.14"
+  }
+}
 ```
 
 - step 3: 
@@ -2543,34 +2486,7 @@ async function connectDB() {
 }
 ```
 
-- step 4: 
-
-```json
-{
-  "name": "mongoose",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^17.3.1",
-    "express": "^5.2.1",
-    "mongoose": "^9.3.3",
-    "nodemon": "^3.1.14"
-  }
-}
-```
-
-- step 5:
+- step 4:
 
 ```
 MONGODB_URI=mongodb://localhost:27017/usersDB
@@ -2679,21 +2595,8 @@ app.listen(port, () => {
 
 ```bash
 npm init -y
-```
-
-```bash
-npm i express pg dotenv
-```
-
-```bash
-npm i -D typescript tsx
-```
-
-```bash
-npm i --save-dev @types/express @types/pg @types/node
-```
-
-```bash
+npm i express pg cors dotenv 
+npm i -D typescript tsx @types/node @types/express @types/pg @types/cors
 tsc --init
 ```
 
@@ -2702,38 +2605,19 @@ tsc --init
 ```json
 // tsconfig.json
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
-    // File Layout
-    "rootDir": "./src", // un-comment it
-    "outDir": "./dist", // un-comment it
-    // Environment Settings
-    // See also https://aka.ms/tsconfig/module
+    "rootDir": "./src", 
+    "outDir": "./dist", 
     "module": "nodenext",
     "target": "esnext",
-    "types": [],
-    // For nodejs:
-    // "lib": ["esnext"],
-    // "types": ["node"],
-    // and npm install -D @types/node
-    // Other Outputs
+    "lib": ["esnext"],
+    "types": ["node"],
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    // Style Options
-    // "noImplicitReturns": true,
-    // "noImplicitOverride": true,
-    // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noPropertyAccessFromIndexSignature": true,
-    // Recommended Options
     "strict": true,
-    // "jsx": "react-jsx", // comment it
-    // "verbatimModuleSyntax": true, // comment it
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
@@ -2749,9 +2633,9 @@ tsc --init
   "name": "express-ts-postgress",
   "version": "1.0.0",
   "description": "",
-  "main": "./src/server.ts", // add where our main server file exist
+  "main": "./src/server.ts", 
   "scripts": {
-    "dev": "tsx watch ./src/server.ts", // add npm run dev script
+    "dev": "tsx watch ./src/server.ts", 
     "build": "tsc",
     "start": "node ./dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -2759,7 +2643,7 @@ tsc --init
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
+  "type": "commonjs", 
   "dependencies": {
     "dotenv": "^17.4.1",
     "express": "^5.2.1",
@@ -2779,7 +2663,8 @@ tsc --init
 
 ```js
 // .env
-CONNECTION_STR=postgresql://neondb_owner:npg_CnF5zJxqcI2k@ep-soft-paper-ant6m8do-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+CONNECTION_STR=postgresql://username:password@host:port/databaseName
+PORT=3000
 ```
 
 - step 4: Use this boilerplate code:
@@ -3046,8 +2931,8 @@ app.listen(port, () => {
 
 ```bash
 npm init -y
-npm i express pg dotenv bcryptjs jsonwebtoken
-npm i -D typescript tsx @types/express @types/pg @types/node @types/jsonwebtoken @types/cors 
+npm i express pg dotenv cors
+npm i -D typescript tsx @types/node @types/express @types/pg @types/cors 
 tsc --init
 ```
 
@@ -3056,38 +2941,23 @@ tsc --init
 ```json
 // tsconfig.json
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
-    // File Layout
-    "rootDir": "./src", // un-comment it
-    "outDir": "./dist", // un-comment it
-    // Environment Settings
-    // See also https://aka.ms/tsconfig/module
+    "rootDir": "./src",
+    "outDir": "./dist",
     "module": "nodenext",
     "target": "esnext",
-    "types": [],
-    // For nodejs:
-    // "lib": ["esnext"],
-    // "types": ["node"],
-    // and npm install -D @types/node
-    // Other Outputs
+    "lib": [
+      "esnext"
+    ],
+    "types": [
+      "node"
+    ],
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    // Style Options
-    // "noImplicitReturns": true,
-    // "noImplicitOverride": true,
-    // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noPropertyAccessFromIndexSignature": true,
-    // Recommended Options
     "strict": true,
-    // "jsx": "react-jsx", // comment it
-    // "verbatimModuleSyntax": true, // comment it
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
@@ -3103,7 +2973,7 @@ tsc --init
   "name": "express-ts-postgress",
   "version": "1.0.0",
   "description": "",
-  "main": "./src/server.ts", // add where our main server file exist
+  "main": "./src/server.ts", 
   "scripts": {
     "dev": "tsx watch ./src/server.ts",
     "build": "tsc",
@@ -3115,16 +2985,20 @@ tsc --init
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "dotenv": "^17.4.1",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "pg": "^8.20.0"
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.21.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.5.2",
+    "@types/node": "^25.9.1",
     "@types/pg": "^8.20.0",
-    "tsx": "^4.21.0",
-    "typescript": "^6.0.2"
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
   }
 }
 ```
@@ -3133,8 +3007,9 @@ tsc --init
 
 ```js
 // .env
-CONNECTION_STR=postgresql://neondb_owner:npg_CnF5zJxqcI2k@ep-soft-paper-ant6m8do-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-port=3000
+# CONNECTION_STR=CONNECTION_STR=postgresql://postgres:YOUR_PASSWORD@localhost:5432/todo_app
+CONNECTION_STR=CONNECTION_STR=postgresql://postgres:hello@localhost:5432/vehiclesDB
+PORT=3000
 ```
 
 ## Example 1: 
@@ -3175,23 +3050,23 @@ dotenv.config()
 
 
 
-const config = {
-    connection_str: process.env.CONNECTION_STR,
+const envConfig = {
+    connectionStr: process.env.CONNECTION_STR,
     port: process.env.PORT,
 }
 
-export default config
+export default envConfig
 ```
 
 ```js
 // src/config/db.ts
 import { Pool } from "pg";
-import config from "./env.js";
+import envConfig from "./env.js";
 
-export const pool = new Pool({ connectionString: config.connection_str });
+export const pool = new Pool({ connectionString: envConfig.connectionStr });
 
 export const initDB = async () => {
-  await pool.query(`
+    await pool.query(`
     CREATE TABLE IF NOT EXISTS notes (
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
@@ -3199,6 +3074,55 @@ export const initDB = async () => {
     )
   `);
 };
+```
+
+```ts
+// src/app.ts
+
+import express, { Request, Response } from "express";
+import cors from "cors";
+import { initDB } from "./config/db.js";
+import { todoRoutes } from "./modules/todo/todo.routes.js";
+
+const app = express();
+
+// Middlewares
+app.use(cors({
+    origin: ["http://localhost:3000", "others-allowed-origins.com"],
+    credentials: true,
+}));
+app.use(express.json());
+
+initDB()
+
+
+app.use("/todos", todoRoutes)
+
+app.get("/", (_req: Request, res: Response) => {
+    res.send("Hello Express!");
+});
+
+app.use((req: Request, res: Response) => {
+    res.status(404).send({
+        error: "Route Not Found",
+        path: req.path
+    })
+})
+
+export default app
+```
+
+```ts
+// src/server.ts
+
+import app from "./app.js";
+import envConfig from "./config/env.js";
+
+const port = envConfig.port || 3000;
+
+app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+});
 ```
 
 ```ts
@@ -3411,54 +3335,10 @@ router.delete("/:id", todoControllers.deleteOneTodo)
 export const todoRoutes = router
 ```
 
-```ts
-// src/app.ts
-
-import express, { Request, Response } from "express";
-import { initDB } from "./config/db.js";
-import { todoRoutes } from "./modules/todo/todo.routes.js";
-
-const app = express();
-app.use(express.json());
-
-initDB()
-
-
-app.use("/todos", todoRoutes)
-
-app.get("/", (req: Request, res: Response) => {
-    res.send("Hello Express!");
-});
-
-app.use((req: Request, res: Response) => {
-    res.status(404).send({
-        error: "Route Not Found",
-        path: req.path
-    })
-})
-
-export default app
-```
-
-```ts
-// src/server.ts
-
-import app from "./app.js";
-import config from "./config/env.js";
-
-const port = config.port || 3000;
-
-app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
-});
-```
 ## Example 2: 
 
-https://github.com/tamim-111/level-2-assignment-2
+https://github.com/tamim-111/b6a2
 
-## Example 3: 
-
-https://github.com/muhammad-tamim/web-project-25-server
 
 # Express + PostgreSQL + Prisma + Ts: 
 ## Setup: 
@@ -3466,8 +3346,8 @@ https://github.com/muhammad-tamim/web-project-25-server
 
 ```bash
 npm init -y
-npm i express pg dotenv @prisma/client @prisma/adapter-pg
-npm i -D typescript tsx prisma @types/node @types/express @types/pg 
+npm i express pg dotenv cors @prisma/client @prisma/adapter-pg
+npm i -D typescript tsx prisma @types/node @types/express @types/pg @types/cors
 npx tsc --init
 ```
 
