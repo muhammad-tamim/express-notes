@@ -573,7 +573,10 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 3000
 
 const app = express()
-app.use(cors()) // use cors middleware
+app.use(cors({
+    origin: ['http://localhost:5173', 'add other frontend urls'],
+    credentials: true
+})) // use cors middleware
 app.use(express.json()) // use express middleware
 
 
@@ -624,16 +627,20 @@ Backend:
 ```js
 const express = require('express')
 const cors = require('cors')
+require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const port = process.env.PORT || 3000
 
 const app = express()
-app.use(cors()) // use cors middleware
+app.use(cors({
+    origin: ['http://localhost:5173', 'add other frontend urls'],
+    credentials: true
+})) // use cors middleware
 app.use(express.json()) // use express middleware
 
 
-const uri = "Enter your mongodb uri";
+const uri = process.env.MONGODB_URI;
 
 const client = new MongoClient(uri, {
     serverApi: {
@@ -648,7 +655,7 @@ async function run() {
     const notesCollection = client.db("crudDB").collection('notes')
 
 
-    // POST - create new note
+    // create new note
     app.post('/notes', async (req, res) => {
         const note = req.body;
         const result = await notesCollection.insertOne(note);
@@ -675,11 +682,11 @@ async function run() {
     app.patch('/notes/:id', async (req, res) => {
         const id = req.params.id
         const filter = { _id: new ObjectId(id) }
-        const updatedData = req.body;
+        const updateData = req.body;
         const updateDoc = {
             $set: {
-                name: updatedData.name,
-                description: updatedData.description
+                name: updateData.name,
+                description: updateData.description
             }
         }
 
@@ -691,17 +698,19 @@ async function run() {
     app.put('/notes/:id', async (req, res) => {
         const id = req.params.id
         const filter = { _id: new ObjectId(id) }
-        const updatedData = req.body;
+        const updateData = req.body;
         const options = { upsert: true }
 
-        const result = await notesCollection.replaceOne(filter, updatedData, options);
+        const result = await notesCollection.replaceOne(filter, updateData, options);
         res.send(result);
     });
 
 
     // DELETE
     app.delete('/notes/:id', async (req, res) => {
-        const result = await notesCollection.deleteOne({ _id: new ObjectId(req.params.id) });
+       const id = req.params.id
+        const filter = {_id: new ObjectId(id)}
+        const result = await notesCollection.deleteOne(filter);
         res.send(result);
     });
 
@@ -1775,7 +1784,11 @@ dotenv.config()
 const port = process.env.PORT || 3000
 
 const app = express()
-app.use(cors()) // use cors middleware
+
+app.use(cors({
+    origin: ['http://localhost:5173', 'add other frontend urls'],
+    credentials: true
+})) // use cors middleware
 app.use(express.json()) // use express middleware
 
 
@@ -1791,51 +1804,164 @@ async function run() {
 
     const notesCollection = client.db("notesDB").collection('notes')
 
-
-    // POST - create new note
+    // create note
     app.post('/note', async (req, res) => {
-        const note = req.body;
-        const result = await notesCollection.insertOne(note);
-        res.send(result);
-    });
-
+        try {
+            const note = req.body;
+            const result = await notesCollection.insertOne(note);
+            return res.status(201).send({
+                success: true,
+                message: "Note created successfully",
+                data: result
+            })
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to create note",
+            })
+        }
+    })
 
     // GET all notes
     app.get('/notes', async (req, res) => {
-        const notes = await notesCollection.find({}).toArray();
-        res.send(notes);
-    });
+        try {
+            const result = await notesCollection.find({}).toArray();
+            return res.status(200).send({
+                success: true,
+                message: "Notes retrieved successfully",
+                data: result
+            })
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to retrieve notes",
+            })
+        }
+    })
 
     // GET a single note
     app.get('/note/:id', async (req, res) => {
-        const id = req.params.id
-        const filter = { _id: new ObjectId(id) }
-        const result = await notesCollection.findOne(filter);
-        res.send(result);
-    });
+        try {
+            const id = req.params.id
 
-
-    // PATCH - partial update
-    app.patch('/note/:id', async (req, res) => {
-        const id = req.params.id
-        const filter = { _id: new ObjectId(id) }
-        const updatedData = req.body;
-        const updatedDoc = {
-            $set: {
-                name: updatedData.name,
-                description: updatedData.description
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Invalid note id",
+                });
             }
+
+            const filter = { _id: new ObjectId(id) }
+            const result = await notesCollection.findOne(filter);
+
+            if (!result) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note retrieved successfully",
+                data: result
+            })
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to retrieve note",
+            })
+        }
+    })
+
+
+    //  partial update a note   
+    app.patch('/note/:id', async (req, res) => {
+        try {
+            const id = req.params.id
+
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Invalid note id",
+                });
+            }
+
+            const filter = { _id: new ObjectId(id) }
+            const updateData = req.body;
+            const updateDoc = {
+                $set: {
+                    name: updateData.name,
+                    description: updateData.description
+                }
+            }
+            const result = await notesCollection.updateOne(filter, updateDoc);
+
+            if (result.matchedCount === 0) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note updated successfully",
+                data: result
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to update note",
+            })
+        }
+    })
+
+    // DELETE a note
+    app.delete('/note/:id', async (req, res) => {
+        try {
+            const id = req.params.id
+
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Invalid note id",
+                })
+            }
+
+            const filter = { _id: new ObjectId(id) }
+            const result = await notesCollection.deleteOne(filter);
+
+            if (result.deletedCount === 0) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note deleted successfully",
+                data: result
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to delete note",
+            })
         }
 
-        const result = await notesCollection.updateOne(filter, updatedDoc);
-        res.send(result);
-    });
-
-    // DELETE
-    app.delete('/note/:id', async (req, res) => {
-        const result = await notesCollection.deleteOne({ _id: new ObjectId(req.params.id) });
-        res.send(result);
-    });
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
@@ -1845,7 +1971,10 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send('Hello World!')
+    return res.status(200).send({
+        success: true,
+        message: "Server is running"
+    })
 })
 
 app.listen(port, () => {
@@ -1853,8 +1982,8 @@ app.listen(port, () => {
 })
 ```
 
-.env: 
-```
+```js
+// .env: 
 MONGODB_URI=mongodb://localhost:27017/
 ```
 
@@ -1873,8 +2002,8 @@ npx tsc --init
 // tsconfig.json 
 {
   "compilerOptions": {
-    "rootDir": "./", // un-commit it, 
-    "outDir": "./dist", // un-commit it
+    "rootDir": "./",  
+    "outDir": "./dist", 
     "module": "nodenext",
     "target": "esnext",
     "lib": [
@@ -1946,21 +2075,23 @@ export const updateNoteSchema = createNoteSchema.partial();
 
 ```ts
 // index.ts
-// index.ts
 
 import express from 'express'
 import cors from 'cors'
 import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb'
 import dotenv from 'dotenv'
-import { createNoteSchema, updateNoteSchema } from './note.validation'
 dotenv.config()
+import { createNoteSchema, updateNoteSchema } from './note.validation'
 
 const port = process.env.PORT || 3000
 
 const app = express()
-app.use(cors()) // use cors middleware
-app.use(express.json()) // use express middleware
 
+app.use(cors({
+    origin: ['http://localhost:5173', 'add other frontend urls'],
+    credentials: true
+})) // use cors middleware
+app.use(express.json())
 
 const client = new MongoClient(process.env.MONGODB_URI as string, {
     serverApi: {
@@ -1974,91 +2105,211 @@ async function run() {
 
     const notesCollection = client.db("notesDB").collection('notes')
 
-
-    // POST - create new note
+    // Create Note
     app.post('/note', async (req, res) => {
+        try {
+            const data = req.body
+            const validation = createNoteSchema.safeParse(data);
 
-        const validation = createNoteSchema.safeParse(req.body);
+            if (!validation.success) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Validation failed",
+                    errors: validation.error.flatten()
+                });
+            }
 
-        if (!validation.success) {
-            return res.status(400).send({
-                success: false,
-                errors: validation.error.issues
+            const result = await notesCollection.insertOne(validation.data);
+
+            return res.status(201).send({
+                success: true,
+                message: "Note created successfully",
+                data: result
             });
         }
-
-
-        const result = await notesCollection.insertOne(validation.data);
-
-        res.send(result);
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to create note",
+            });
+        }
     });
 
-
-    // GET all notes
+    // Get All Notes
     app.get('/notes', async (req, res) => {
-        const notes = await notesCollection.find({}).toArray();
-        res.send(notes);
-    });
+        try {
+            const result = await notesCollection.find({}).toArray();
 
-    // GET a single note
-    app.get('/note/:id', async (req, res) => {
-        const id = req.params.id
-        const filter = { _id: new ObjectId(id) }
-        const result = await notesCollection.findOne(filter);
-        res.send(result);
-    });
-
-
-    // PATCH - partial update
-    app.patch('/note/:id', async (req, res) => {
-
-        const validation = updateNoteSchema.safeParse(req.body);
-
-        if (!validation.success) {
-            return res.status(400).send({
-                success: false,
-                errors: validation.error.flatten()
+            return res.status(200).send({
+                success: true,
+                message: "Notes fetched successfully",
+                data: result
             });
         }
-
-        const id = req.params.id;
-        const filter = { _id: new ObjectId(id) }
-        // const updateData = req.body;
-        // const updateDoc = {
-        //     $set: {
-        //         name: updatedData.name,
-        //         description: updatedData.description
-        //     }
-        // }
-        // or since we already have zod update schema
-        const updateData = validation.data
-        const updateDoc = {
-            $set: updateData
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to fetch notes",
+            });
         }
-
-        const result = await notesCollection.updateOne(filter, updateDoc);
-        res.send(result);
     });
 
-    // DELETE
+    // Get Single Note
+    app.get('/note/:id', async (req, res) => {
+        try {
+            const id = req.params.id
+
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Invalid note id",
+                });
+            }
+
+            const filter = { _id: new ObjectId(id) }
+
+            const result = await notesCollection.findOne(filter);
+
+            if (!result) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note fetched successfully",
+                data: result
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to fetch note",
+            });
+        }
+    });
+
+    // Update Note
+    app.patch('/note/:id', async (req, res) => {
+        try {
+            const data = req.body
+            const validation = updateNoteSchema.safeParse(data);
+
+            if (!validation.success) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Validation failed",
+                    errors: validation.error.flatten()
+                });
+            }
+
+            const id = req.params.id;
+
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Invalid note id",
+                });
+            }
+
+            const filter = { _id: new ObjectId(id) }
+
+            const updateData = validation.data
+            /*
+             const updateDoc = {
+                 $set: {
+                     name: updatedData.name,
+                     description: updatedData.description
+                 }
+             }
+            */
+            // since we already have zod update schema so we can use below
+            const updateDoc = {
+                $set: updateData
+            }
+
+            const result = await notesCollection.updateOne(filter, updateDoc);
+
+            if (result.matchedCount === 0) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note updated successfully",
+                data: result
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to update note",
+            });
+        }
+    });
+
+    // Delete Note
     app.delete('/note/:id', async (req, res) => {
-        const result = await notesCollection.deleteOne({ _id: new ObjectId(req.params.id) });
-        res.send(result);
+        try {
+            const id = req.params.id
+
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Invalid note id",
+                });
+            }
+
+            const filter = { _id: new ObjectId(id) }
+
+            const result = await notesCollection.deleteOne(filter);
+
+            if (result.deletedCount === 0) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note deleted successfully",
+                data: result
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to delete note",
+            });
+        }
     });
 
-    // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 }
+
 run().catch(console.dir);
 
-
 app.get('/', (req, res) => {
-    res.send('Hello World!')
+    return res.status(200).send({
+        success: true,
+        message: "Server is running",
+    });
 })
 
 app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
+    console.log(`Server listening on port ${port}`)
 })
 ```
 
