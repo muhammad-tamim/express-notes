@@ -23,20 +23,22 @@
 - [Express + MongoDB + TS + Zod:](#express--mongodb--ts--zod)
   - [Setup:](#setup-3)
   - [Example 1:](#example-1-2)
-- [Express + MongoDB + TS + Zod (Modeller Pattern):](#express--mongodb--ts--zod-modeller-pattern)
+- [Express + MongoDB + TS + Zod (Modular Pattern):](#express--mongodb--ts--zod-modular-pattern)
   - [Setup:](#setup-4)
   - [Example 1:](#example-1-3)
-  - [Example 2:](#example-2-1)
 - [Express + Mongoose + JS:](#express--mongoose--js)
   - [Setup:](#setup-5)
   - [Example 1:](#example-1-4)
+- [Express + Mongoose + ts:](#express--mongoose--ts)
+- [Express + Mongoose + ts + Zod:](#express--mongoose--ts--zod)
+- [Express + Mongoose + ts + Zod (Modular Pattern):](#express--mongoose--ts--zod-modular-pattern)
 - [Express + PostgreSQL + TS:](#express--postgresql--ts)
   - [Setup:](#setup-6)
   - [Example 1:](#example-1-5)
-- [Express + PostgreSQL + TS (Modular pattern):](#express--postgresql--ts-modular-pattern)
+- [Express + PostgreSQL + TS (Modular Pattern):](#express--postgresql--ts-modular-pattern)
   - [Setup:](#setup-7)
   - [Example 1:](#example-1-6)
-  - [Example 2:](#example-2-2)
+  - [Example 2:](#example-2-1)
 - [Express + PostgreSQL + Prisma + Ts:](#express--postgresql--prisma--ts)
   - [Setup:](#setup-8)
   - [Example 1:](#example-1-7)
@@ -519,7 +521,7 @@ app.listen(port, () => {
 
 ## setup:
 
-- **step 1:** 
+**step 1:** 
 
 ```bash
 npm init -y
@@ -565,59 +567,10 @@ Note:
 **step 3:** 
 
 ```js
-const express = require('express')
-const cors = require('cors')
-require('dotenv').config()
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-
-const port = process.env.PORT || 3000
-
-const app = express()
-app.use(cors({
-    origin: ['http://localhost:5173', 'add other frontend urls'],
-    credentials: true
-})) // use cors middleware
-app.use(express.json()) // use express middleware
-
-
-const client = new MongoClient(process.env.MONGODB_URI, {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    }
-});
-
-async function run() {
-
-    // const database = client.db("usersDB")
-    // const usersCollection = database.collection('users')
-    const usersCollection = client.db("usersDB").collection('users')
-
-
-    /*
-    
-    ALl CRUD Operation here  
-    
-    */
-
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-}
-run().catch(console.dir);
-
-
-app.get('/', (req, res) => {
-    res.send('Hello World!')
-})
-
-app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
-})
+// .env
+MONGODB_URI=mongodb://localhost:27017/
+PORT=3000
 ```
-Note: Middleware in Express is a function that runs between the request and the response. It can modify the request, check something, or run some logic before sending the final response.
-
 
 
 ## Example 1:
@@ -636,8 +589,8 @@ const app = express()
 app.use(cors({
     origin: ['http://localhost:5173', 'add other frontend urls'],
     credentials: true
-})) // use cors middleware
-app.use(express.json()) // use express middleware
+})) 
+app.use(express.json()) 
 
 
 const uri = process.env.MONGODB_URI;
@@ -652,8 +605,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
 
-    const notesCollection = client.db("crudDB").collection('notes')
-
+    const notesCollection = client.db("notesDB").collection('notes')
 
     // create new note
     app.post('/notes', async (req, res) => {
@@ -723,8 +675,19 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send('Hello World!')
+    return res.status(200).send({
+        success: true,
+        message: "Server is running"
+    })
 })
+
+app.use((req: Request, res: Response) => {
+    res.status(404).send({
+        success: false,
+        message: "Route Not Found",
+        path: req.path
+    });
+});
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
@@ -1977,6 +1940,14 @@ app.get('/', (req, res) => {
     })
 })
 
+app.use((req: Request, res: Response) => {
+    res.status(404).send({
+        success: false,
+        message: "Route Not Found",
+        path: req.path
+    });
+});
+
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
@@ -2308,18 +2279,50 @@ app.get('/', (req, res) => {
     });
 })
 
+app.use((req: Request, res: Response) => {
+    res.status(404).send({
+        success: false,
+        message: "Route Not Found",
+        path: req.path
+    });
+});
+
 app.listen(port, () => {
     console.log(`Server listening on port ${port}`)
 })
 ```
 
-# Express + MongoDB + TS + Zod (Modeller Pattern):
+# Express + MongoDB + TS + Zod (Modular Pattern):
+
+**Note:** For modular architecture follow this golden rule: 
+```
+Zod Validation
+  ⬇️
+Types
+  ⬇️
+Service
+  ⬇️
+Controller
+  ⬇️
+Route
+  ⬇️
+app
+  ⬇️
+server
+```
+
+| Layer      | Main Responsibility                   |
+| ---------- | ------------------------------------- |
+| Service    | handle business logic + DB operations |
+| Controller | handle HTTP request/response          |
+| Route      | handle API endpoint                   |
+
 
 ## Setup: 
 
 ```bash
 npm init -y
-npm i express mongodb cors zod dotenv
+npm i express mongodb cors dotenv zod
 npm i -D typescript tsx @types/node @types/express @types/mongodb @types/cors 
 npx tsc --init
 ```
@@ -2382,24 +2385,10 @@ npx tsc --init
 }
 ```
 
-
-
-
-Note: For modular architecture follow this golder rule: 
-```
-Zod Validation
-  ⬇️
-Types
-  ⬇️
-Service
-  ⬇️
-Controller
-  ⬇️
-Route
-  ⬇️
-app
-  ⬇️
-server
+```ts
+// env
+MONGODB_URI=mongodb://localhost:27017/
+PORT=3000
 ```
 
 ## Example 1: 
@@ -2419,231 +2408,418 @@ src/
 │       ├── notes.route.ts
 │       ├── notes.controller.ts
 │       ├── notes.service.ts
-│       ├── notes.validation.ts
+│       ├── notes.validations.ts
 │       └── notes.types.ts
 │
 ├── middlewares/
 │   └── validate.ts
-│
-└── utils/
-    └── 
 ```
+
 
 ```ts
-// notes.validation.ts
-import { z } from 'zod'
+// src/config/db.ts
 
-export const createNoteSchema = z.object({
-    name: z.string().min(1),
-    description: z.string().min(1)
-})
+import { MongoClient, ServerApiVersion } from "mongodb";
+import envConfig from "./env.js";
 
-export const updateNoteSchema = createNoteSchema.partial()
-```
-
-```ts
-// notes.types.ts
-export interface Note {
-    name: string
-    description: string
-}
-```
-
-
-```js
-// notes.service.ts
-import { ObjectId } from 'mongodb'
-import { client } from '../config/db.js'
-import { Note } from './notes.types.js'
-
-
-const notesCollection = client.db('crudDB').collection<Note>('notes')
-
-export const NotesService = {
-    create(note: Note) {
-        return notesCollection.insertOne(note)
-    },
-
-    findAll() {
-        return notesCollection.find().toArray()
-    },
-
-    findOne(id: string) {
-        return notesCollection.findOne({ _id: new ObjectId(id) })
-    },
-
-    update(id: string, data: Partial<Note>) {
-        return notesCollection.updateOne(
-            { _id: new ObjectId(id) },
-            { $set: data }
-        )
-    },
-
-    replace(id: string, data: Note) {
-        return notesCollection.replaceOne(
-            { _id: new ObjectId(id) },
-            data,
-            { upsert: true }
-        )
-    },
-
-    delete(id: string) {
-        return notesCollection.deleteOne({ _id: new ObjectId(id) })
-    }
-}
-```
-
-```ts
-// notes.controller.ts
-import { Request, Response } from 'express'
-import { NotesService } from './notes.service.js'
-
-export const createNote = async (req: Request, res: Response) => {
-    const result = await NotesService.create(req.body)
-    res.status(201).json(result)
-}
-
-export const getNotes = async (_req: Request, res: Response) => {
-    const notes = await NotesService.findAll()
-    res.json(notes)
-}
-
-export const getNote = async (req: Request, res: Response) => {
-    const note = await NotesService.findOne(req.params.id as string)
-    res.json(note)
-}
-
-export const updateNote = async (req: Request, res: Response) => {
-    const result = await NotesService.update(req.params.id as string, req.body)
-    res.json(result)
-}
-
-export const replaceNote = async (req: Request, res: Response) => {
-    const result = await NotesService.replace(req.params.id as string, req.body)
-    res.json(result)
-}
-
-export const deleteNote = async (req: Request, res: Response) => {
-    const result = await NotesService.delete(req.params.id as string)
-    res.json(result)
-}
-```
-
-```ts
-// notes.route.ts
-import { Router } from 'express'
-import { createNote, getNotes, getNote, updateNote, replaceNote, deleteNote } from './notes.controller.js'
-import { validate } from '../middlewares/validate.js'
-import { createNoteSchema, updateNoteSchema } from './notes.validation.js'
-
-const router = Router()
-
-router.post('/', validate(createNoteSchema), createNote)
-router.get('/', getNotes)
-router.get('/:id', getNote)
-router.patch('/:id', validate(updateNoteSchema), updateNote)
-router.put('/:id', validate(createNoteSchema), replaceNote)
-router.delete('/:id', deleteNote)
-
-export default router
-
-export const notesRoutes = router
-```
-
-```js
-// app.ts
-import express from 'express'
-import cors from 'cors'
-import { notesRoutes } from './notes/notes.route.js'
-
-const app = express()
-
-app.use(cors())
-app.use(express.json())
-
-app.use('/notes', notesRoutes)
-
-app.get('/', (_req, res) => {
-    res.send('Hello World!')
-})
-
-export default app
-```
-
-```js
-// server.ts
-import app from './app.js'
-import { connectDB } from './config/db.js'
-import { env } from './config/env.js'
-
-async function bootstrap() {
-    await connectDB()
-
-    app.listen(env.PORT, () => {
-        console.log(`Server running on port ${env.PORT}`)
-    })
-}
-
-bootstrap()
-```
-
-```js
-// db.ts
-import { MongoClient, ServerApiVersion } from 'mongodb'
-import dotenv from 'dotenv'
-import { env } from './env.js'
-
-dotenv.config()
-
-export const client = new MongoClient(env.MONGODB_URI, {
+const client = new MongoClient(envConfig.mongodbUri, {
     serverApi: {
         version: ServerApiVersion.v1,
         strict: true,
-        deprecationErrors: true
+        deprecationErrors: true,
     }
+});
+
+export const notesCollection = client.db("notesDB").collection("notes");
+
+export async function initDB() {
+    try {
+        await client.connect();
+        await client.db("admin").command({ ping: 1 });
+        console.log("MongoDB connected successfully");
+    }
+    catch (error) {
+        console.log("MongoDB connection failed", error);
+    }
+}
+```
+
+```ts
+// src/config.env.ts
+
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const envConfig = {
+    mongodbUri: process.env.MONGODB_URI as string,
+    port: process.env.PORT,
+};
+
+export default envConfig;
+```
+
+```ts
+// src/middleware/validate.ts
+
+import { Request, Response, NextFunction } from "express";
+import { ZodType } from "zod";
+
+export const validate = (schema: ZodType) => (req: Request, res: Response, next: NextFunction) => {
+
+    const validation = schema.safeParse(req.body);
+
+    if (!validation.success) {
+
+        const errors = validation.error.issues.map(issue => ({
+            field: issue.path.join("."),
+            message: issue.message,
+        }));
+
+        return res.status(400).send({
+            success: false,
+            message: "Validation failed",
+            errors: errors,
+        });
+    }
+
+    req.body = validation.data;
+
+    next();
+};
+```
+
+```ts
+// src/middleware/validate.ts
+
+import { Request, Response, NextFunction } from "express";
+import { ZodType } from "zod";
+
+export const validate = (schema: ZodType) => (req: Request, res: Response, next: NextFunction) => {
+
+    const validation = schema.safeParse(req.body);
+
+    if (!validation.success) {
+
+        const errors = validation.error.issues.map(issue => ({
+            field: issue.path.join("."),
+            message: issue.message,
+        }));
+
+        return res.status(400).send({
+            success: false,
+            message: "Validation failed",
+            errors: errors,
+        });
+    }
+
+    req.body = validation.data;
+
+    next();
+};
+```
+
+```ts
+// src/app.ts
+
+import express, { Request, Response } from "express";
+import cors from "cors";
+import { initDB } from "./config/db.js";
+import { notesRoutes } from "./modules/notes/notes.routes.js";
+
+const app = express();
+
+// Middlewares
+app.use(cors({
+    origin: ["http://localhost:5173", "add others url"],
+    credentials: true,
+}));
+app.use(express.json());
+
+// Initialize DB
+initDB();
+
+// Routes
+app.use("/notes", notesRoutes);
+
+app.get('/', (req, res) => {
+    return res.status(200).send({
+        success: true,
+        message: "Server is running"
+    })
 })
 
-export async function connectDB() {
-    await client.connect()
-    await client.db('admin').command({ ping: 1 })
-    console.log('MongoDB connected')
-}
+app.use((req: Request, res: Response) => {
+    res.status(404).send({
+        success: false,
+        message: "Route Not Found",
+        path: req.path
+    });
+});
+
+export default app;
 ```
-```js
-// env.ts
-import 'dotenv/config'
 
-export const env = {
-    PORT: process.env.PORT || 3000,
-    MONGODB_URI: process.env.MONGODB_URI as string
-}
+```ts
+// src/server.ts
 
-if (!env.MONGODB_URI) {
-    throw new Error('MONGODB_URI is missing in .env')
-}
+import app from "./app.js";
+import envConfig from "./config/env.js";
+
+const port = envConfig.port || 3000;
+
+app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+});
 ```
-```js
-// middlewares/validate.ts
-import { Request, Response, NextFunction } from 'express'
-import { ZodType } from "zod"
 
-export const validate = <T>(schema: ZodType<T>) => (req: Request, res: Response, next: NextFunction) => {
-    const result = schema.safeParse(req.body)
+```ts
+// src/modules/notes.types.ts
 
-    if (!result.success) {
-        return res.status(400).json({
-            message: "Validation failed",
-            errors: result.error.issues,
-        })
+import z from "zod";
+import { createNoteSchema, updateNoteSchema } from "./notes.validations.js";
+
+/*
+export type CreateNoteInput = {
+    name: string;
+    description: string;
+}
+
+export type UpdateNoteInput = {
+    name?: string;
+    description?: string;
+}
+*/
+
+export type CreateNoteInput = z.infer<typeof createNoteSchema>;
+export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
+```
+
+```ts
+// src/modules/notes.validations.ts
+
+import z from "zod";
+
+export const createNoteSchema = z.object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    description: z.string().min(5, "Description must be at least 5 characters"),
+});
+
+export const updateNoteSchema = createNoteSchema.partial();
+
+```
+
+```ts
+// src/modules/notes.service.ts
+
+import { ObjectId } from "mongodb";
+import { notesCollection } from "../../config/db.js";
+import { CreateNoteInput, UpdateNoteInput } from "./notes.types.js";
+
+export const notesService = {
+    async createNote(payload: CreateNoteInput) {
+        const result = await notesCollection.insertOne(payload);
+        return result;
+    },
+
+    async getAllNotes() {
+        const result = await notesCollection.find({}).toArray();
+        return result;
+    },
+
+    async getSingleNote(id: string) {
+        const filter = { _id: new ObjectId(id) }
+        const result = await notesCollection.findOne(filter)
+        return result
+    },
+
+    async updateNote(id: string, payload: UpdateNoteInput) {
+        const filter = { _id: new ObjectId(id) }
+        const updateData = payload
+        const updateDoc = {
+            $set: updateData
+        }
+        const result = await notesCollection.updateOne(filter, updateDoc)
+        return result;
+    },
+
+    async deleteNote(id: string) {
+        const filter = { _id: new ObjectId(id) }
+        const result = await notesCollection.deleteOne(filter)
+        return result
     }
-
-    req.body = result.data
-    next()
 }
 ```
 
-## Example 2:
-[Click here to see the project](./express-mongodb-ts-zod-1)
+```ts 
+// src/modules/notes.controller.ts
+
+import { Request, Response } from "express";
+import { ObjectId } from "mongodb";
+import { notesService } from "./notes.service.js";
+
+export const notesController = {
+    async createNote(req: Request, res: Response) {
+        try {
+            const result = await notesService.createNote(req.body);
+
+            return res.status(201).send({
+                success: true,
+                message: "Note created successfully",
+                data: result
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to create note",
+            });
+        }
+    },
+
+    async getAllNotes(_req: Request, res: Response) {
+        try {
+            const result = await notesService.getAllNotes();
+
+            return res.status(200).send({
+                success: true,
+                message: "Notes fetched successfully",
+                data: result
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to fetch notes",
+            });
+        }
+    },
+
+    async getSingleNote(req: Request, res: Response) {
+        try {
+            const id = req.params.id as string;
+
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Invalid note id",
+                });
+            }
+
+            const result = await notesService.getSingleNote(id);
+
+            if (!result) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note fetched successfully",
+                data: result
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to fetch note",
+            });
+        }
+    },
+
+    async updateNote(req: Request, res: Response) {
+        try {
+            const id = req.params.id as string;
+
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Invalid note id",
+                });
+            }
+
+            const result = await notesService.updateNote(id, req.body);
+
+            if (result.matchedCount === 0) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note updated successfully",
+                data: result
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to update note",
+            });
+        }
+    },
+
+    async deleteNote(req: Request, res: Response) {
+        try {
+            const id = req.params.id as string;
+
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Invalid note id",
+                });
+            }
+
+            const result = await notesService.deleteNote(id);
+
+            if (result.deletedCount === 0) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note deleted successfully",
+                data: result
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to delete note",
+            });
+        }
+    }
+}
+```
+
+```ts
+// src/modules/notes.routes.ts
+
+import { Router } from "express";
+import { createNoteSchema, updateNoteSchema } from "./notes.validations.js";
+import { validate } from "../../middlewares/validate.js";
+import { notesController } from "./notes.controller.js";
+
+export const notesRoutes = Router();
+
+notesRoutes.post("/", validate(createNoteSchema), notesController.createNote);
+notesRoutes.get("/", notesController.getAllNotes);
+notesRoutes.get("/:id", notesController.getSingleNote);
+notesRoutes.patch("/:id", validate(updateNoteSchema), notesController.updateNote);
+notesRoutes.delete("/:id", notesController.deleteNote);
+```
 
 # Express + Mongoose + JS: 
 
@@ -2726,7 +2902,7 @@ app.listen(port, () => {
 
 we can use this function when we works on modular architecture:
 ```js
-async function connectDB() {
+async function initDB() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('✅ MongoDB connected with Mongoose');
@@ -2838,6 +3014,12 @@ app.listen(port, () => {
     console.log(`🚀 Server running on port ${port}`);
 });
 ```
+
+# Express + Mongoose + ts: 
+
+# Express + Mongoose + ts + Zod: 
+
+# Express + Mongoose + ts + Zod (Modular Pattern):
 
 # Express + PostgreSQL + TS:
 ## Setup:
@@ -3174,7 +3356,7 @@ app.listen(port, () => {
 });
 ```
 
-# Express + PostgreSQL + TS (Modular pattern): 
+# Express + PostgreSQL + TS (Modular Pattern): 
 
 ## Setup:
 
