@@ -29,22 +29,22 @@
 - [Express + Mongoose + JS:](#express--mongoose--js)
   - [Setup:](#setup-5)
   - [Example 1:](#example-1-4)
-- [Express + Mongoose + ts:](#express--mongoose--ts)
-- [Express + Mongoose + ts + Zod:](#express--mongoose--ts--zod)
-- [Express + Mongoose + ts + Zod (Modular Pattern):](#express--mongoose--ts--zod-modular-pattern)
-- [Express + PostgreSQL + TS:](#express--postgresql--ts)
+- [Express + Mongoose + TS + Zod (Modular Pattern):](#express--mongoose--ts--zod-modular-pattern)
   - [Setup:](#setup-6)
   - [Example 1:](#example-1-5)
-- [Express + PostgreSQL + TS (Modular Pattern):](#express--postgresql--ts-modular-pattern)
+- [Express + PostgreSQL + TS:](#express--postgresql--ts)
   - [Setup:](#setup-7)
   - [Example 1:](#example-1-6)
-  - [Example 2:](#example-2-1)
-- [Express + PostgreSQL + Prisma + Ts:](#express--postgresql--prisma--ts)
+- [Express + PostgreSQL + TS (Modular Pattern):](#express--postgresql--ts-modular-pattern)
   - [Setup:](#setup-8)
   - [Example 1:](#example-1-7)
-- [Express + PostgreSQL + Prisma + Ts (Modular Pattern):](#express--postgresql--prisma--ts-modular-pattern)
+  - [Example 2:](#example-2-1)
+- [Express + PostgreSQL + Prisma + Ts:](#express--postgresql--prisma--ts)
   - [Setup:](#setup-9)
   - [Example 1:](#example-1-8)
+- [Express + PostgreSQL + Prisma + Ts (Modular Pattern):](#express--postgresql--prisma--ts-modular-pattern)
+  - [Setup:](#setup-10)
+  - [Example 1:](#example-1-9)
 
 
 # Setup:
@@ -2490,36 +2490,6 @@ export const validate = (schema: ZodType) => (req: Request, res: Response, next:
 ```
 
 ```ts
-// src/middleware/validate.ts
-
-import { Request, Response, NextFunction } from "express";
-import { ZodType } from "zod";
-
-export const validate = (schema: ZodType) => (req: Request, res: Response, next: NextFunction) => {
-
-    const validation = schema.safeParse(req.body);
-
-    if (!validation.success) {
-
-        const errors = validation.error.issues.map(issue => ({
-            field: issue.path.join("."),
-            message: issue.message,
-        }));
-
-        return res.status(400).send({
-            success: false,
-            message: "Validation failed",
-            errors: errors,
-        });
-    }
-
-    req.body = validation.data;
-
-    next();
-};
-```
-
-```ts
 // src/app.ts
 
 import express, { Request, Response } from "express";
@@ -2858,168 +2828,742 @@ npm i express mongoose nodemon cors dotenv
 }
 ```
 
-- step 3: 
-
-```js
-// index.js
-
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
-const mongoose = require('mongoose');
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-// middleware
-app.use(cors());
-app.use(express.json());
-
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI);
-
-
-// Mongoose Schema + Model
-const userSchema = new mongoose.Schema({
-    name: String,
-    email: String,
-});
-
-const UsersCollection = mongoose.model('User', userSchema);
-
-// all cred operations 
-
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
-
-
-// Server Start
-app.listen(port, () => {
-    console.log(`🚀 Server running on port ${port}`);
-});
-```
-
-we can use this function when we works on modular architecture:
-```js
-async function initDB() {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ MongoDB connected with Mongoose');
-  } catch (error) {
-    console.error('❌ MongoDB connection failed:', error.message);
-    process.exit(1);
-  }
-}
-```
-
-- step 4:
+- step 3:
 
 ```
 MONGODB_URI=mongodb://localhost:27017/usersDB
+PORT=300
 ```
 
 ## Example 1: 
 
-```js
-// index.js
+```ts
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
 
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
-const mongoose = require('mongoose');
+import { Note } from "./src/models/note.model";
+
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// middleware
-app.use(cors());
+app.use(
+    cors({
+        origin: ["http://localhost:5173"],
+        credentials: true,
+    })
+);
+
 app.use(express.json());
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI);
+async function initDB() {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI as string);
+        console.log("MongoDB connected successfully");
+    }
+    catch (error) {
+        console.log("MongoDB connection failed", error);
+        process.exit(1);
+    }
+}
+
+initDB();
+
+// CREATE NOTE
+app.post("/note", async (req, res) => {
+    try {
+        const note = await Note.create(req.body);
+
+        return res.status(201).send({
+            success: true,
+            message: "Note created successfully",
+            data: note,
+        });
+    }
+    catch (error) {
+        console.log(error);
+
+        return res.status(500).send({
+            success: false,
+            message: "Failed to create note",
+        });
+    }
+});
 
 
-// Mongoose Schema + Model
+// GET ALL NOTES
+app.get("/notes", async (req, res) => {
+    try {
+        const notes = await Note.find();
+
+        return res.status(200).send({
+            success: true,
+            message: "Notes retrieved successfully",
+            data: notes,
+        });
+    }
+    catch (error) {
+        console.log(error);
+
+        return res.status(500).send({
+            success: false,
+            message: "Failed to retrieve notes",
+        });
+    }
+});
+
+
+// GET SINGLE NOTE
+app.get("/note/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).send({
+                success: false,
+                message: "Invalid note id",
+            });
+        }
+
+        const note = await Note.findById(id);
+
+        if (!note) {
+            return res.status(404).send({
+                success: false,
+                message: "Note not found",
+            });
+        }
+
+        return res.status(200).send({
+            success: true,
+            message: "Note retrieved successfully",
+            data: note,
+        });
+    }
+    catch (error) {
+        console.log(error);
+
+        return res.status(500).send({
+            success: false,
+            message: "Failed to retrieve note",
+        });
+    }
+});
+
+
+// UPDATE NOTE
+app.patch("/note/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).send({
+                success: false,
+                message: "Invalid note id",
+            });
+        }
+
+        const updatedNote = await Note.findByIdAndUpdate(
+            id,
+            req.body,
+            {
+                new: true,
+                runValidators: true,
+                // upsert: true; // if we used PUT
+            }
+        );
+
+        if (!updatedNote) {
+            return res.status(404).send({
+                success: false,
+                message: "Note not found",
+            });
+        }
+
+        return res.status(200).send({
+            success: true,
+            message: "Note updated successfully",
+            data: updatedNote,
+        });
+    }
+    catch (error) {
+        console.log(error);
+
+        return res.status(500).send({
+            success: false,
+            message: "Failed to update note",
+        });
+    }
+});
+
+
+// DELETE NOTE
+app.delete("/note/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).send({
+                success: false,
+                message: "Invalid note id",
+            });
+        }
+
+        const deletedNote = await Note.findByIdAndDelete(id);
+
+        if (!deletedNote) {
+            return res.status(404).send({
+                success: false,
+                message: "Note not found",
+            });
+        }
+
+        return res.status(200).send({
+            success: true,
+            message: "Note deleted successfully",
+            data: deletedNote,
+        });
+    }
+    catch (error) {
+        console.log(error);
+
+        return res.status(500).send({
+            success: false,
+            message: "Failed to delete note",
+        });
+    }
+});
+
+
+app.get("/", (req, res) => {
+    return res.status(200).send({
+        success: true,
+        message: "Server is running",
+    });
+});
+
+
+app.use((req: Request, res: Response) => {
+    res.status(404).send({
+        success: false,
+        message: "Route Not Found",
+        path: req.path
+    });
+});
+
+app.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+});
+```
+
+# Express + Mongoose + TS + Zod (Modular Pattern):
+
+**Note:** For modular architecture follow this golden rule: 
+```
+Zod Validation
+  ⬇️
+Types
+  ⬇️
+Mongoose Model
+  ⬇️
+Service
+  ⬇️
+Controller
+  ⬇️
+Route
+  ⬇️
+app
+  ⬇️
+server
+```
+
+| Layer      | Main Responsibility                   |
+| ---------- | ------------------------------------- |
+| Service    | handle business logic + DB operations |
+| Controller | handle HTTP request/response          |
+| Route      | handle API endpoint                   |
+
+
+## Setup: 
+
+```bash
+npm init -y
+npm i express mongoose cors dotenv zod
+npm i -D typescript tsx @types/node @types/express @types/cors 
+npx tsc --init
+```
+
+```json
+// tsconfig.json:
+{
+  "compilerOptions": {
+    "rootDir": "./src", 
+    "outDir": "./dist", 
+    "module": "nodenext",
+    "target": "esnext",
+    "lib": ["esnext"],
+    "types": ["node"],
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "strict": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+  }
+}
+```
+
+```json
+// package.json:
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./src/server.ts",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "mongoose": "^7.0.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
+```
+
+```ts
+// env
+MONGODB_URI=mongodb://localhost:27017/
+PORT=3000
+```
+
+## Example 1: 
+
+```
+src/
+│
+├── app.ts
+├── server.ts
+│
+├── config/
+│   ├── db.ts
+│   └── env.ts
+│
+├── modules/
+│   └── notes/
+│       ├── notes.route.ts
+│       ├── notes.controller.ts
+│       ├── notes.service.ts
+│       ├── notes.validations.ts
+│       ├── notes.model.ts
+│       └── notes.types.ts
+│
+├── middlewares/
+│   └── validate.ts
+```
+
+
+```ts
+// src/config/db.ts
+
+import mongoose from "mongoose";
+import envConfig from "./env.js";
+
+export async function initDB() {
+    try {
+        await mongoose.connect(envConfig.mongodbUri);
+
+        console.log("MongoDB connected successfully");
+    }
+    catch (error) {
+        console.log("MongoDB connection failed", error);
+
+        process.exit(1);
+    }
+}
+```
+
+```ts
+// src/config.env.ts
+
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const envConfig = {
+    mongodbUri: process.env.MONGODB_URI as string,
+    port: process.env.PORT,
+};
+
+export default envConfig;
+```
+
+```ts
+// src/middleware/validate.ts
+
+import { Request, Response, NextFunction } from "express";
+import { ZodType } from "zod";
+
+export const validate = (schema: ZodType) => (req: Request, res: Response, next: NextFunction) => {
+
+    const validation = schema.safeParse(req.body);
+
+    if (!validation.success) {
+
+        const errors = validation.error.issues.map(issue => ({
+            field: issue.path.join("."),
+            message: issue.message,
+        }));
+
+        return res.status(400).send({
+            success: false,
+            message: "Validation failed",
+            errors: errors,
+        });
+    }
+
+    req.body = validation.data;
+
+    next();
+};
+```
+
+
+```ts
+// src/app.ts
+
+import express, { Request, Response } from "express";
+import cors from "cors";
+import { initDB } from "./config/db.js";
+import { notesRoutes } from "./modules/notes/notes.routes.js";
+
+const app = express();
+
+// Middlewares
+app.use(cors({
+    origin: ["http://localhost:5173", "add others url"],
+    credentials: true,
+}));
+app.use(express.json());
+
+// Initialize DB
+initDB();
+
+// Routes
+app.use("/notes", notesRoutes);
+
+app.get('/', (req, res) => {
+    return res.status(200).send({
+        success: true,
+        message: "Server is running"
+    })
+})
+
+app.use((req: Request, res: Response) => {
+    res.status(404).send({
+        success: false,
+        message: "Route Not Found",
+        path: req.path
+    });
+});
+
+export default app;
+```
+
+```ts
+// src/server.ts
+
+import app from "./app.js";
+import envConfig from "./config/env.js";
+
+const port = envConfig.port || 3000;
+
+app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+});
+```
+
+```ts
+// src/modules/notes.types.ts
+
+import z from "zod";
+import { createNoteSchema, updateNoteSchema } from "./notes.validations.js";
+
+/*
+export type CreateNoteInput = {
+    name: string;
+    description: string;
+}
+
+export type UpdateNoteInput = {
+    name?: string;
+    description?: string;
+}
+*/
+
+export type CreateNoteInput = z.infer<typeof createNoteSchema>;
+export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
+```
+
+```ts
+// src/modules/notes.validations.ts
+
+import z from "zod";
+
+export const createNoteSchema = z.object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    description: z.string().min(5, "Description must be at least 5 characters"),
+});
+
+export const updateNoteSchema = createNoteSchema.partial();
+```
+
+```ts
+// src/modules/notes/notes.model.ts
+
+import mongoose from "mongoose";
+
 const userSchema = new mongoose.Schema({
     name: String,
     email: String,
 });
 
-const UsersCollection = mongoose.model('User', userSchema);
-
-// all cred operations 
-
-// root
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
-
-// CREATE
-app.post('/users', async (req, res) => {
-    const user = req.body
-    const result = await UsersCollection.create(user);
-    res.send(result);
-});
-
-// READ ALL
-app.get('/users', async (req, res) => {
-    const result = await UsersCollection.find()
-    res.send(result)
-})
-
-// READ ONE
-app.get('/users/:id', async (req, res) => {
-    const filter = req.params.id
-    const result = await UsersCollection.findById(filter);
-    res.send(result);
-});
-
-// PATCH UPDATE
-app.patch('/users/:id', async (req, res) => {
-    const filter = req.params.id
-    const { name, email } = req.body
-    const updatedData = { name, email }
-    const updatedDoc = {
-        new: true,
-        runValidators: true
-    }
-    const result = await UsersCollection.findByIdAndUpdate(filter, updatedData, updatedDoc);
-    res.send(result);
-});
-
-// PUT Replace
-app.put('/users/:id', async (req, res) => {
-    const id = req.params.id;
-    const filter = { _id: id }
-    const newData = req.body;
-    const result = await usersCollection.replaceOne(filter, newData, {
-        new: true,
-        runValidators: true,
-        upsert: true
-    });
-    res.send(result);
-});
-
-// DELETE
-app.delete('/users/:id', async (req, res) => {
-    const filter = req.params.id
-    const result = await UsersCollection.findByIdAndDelete(filter)
-    res.send(result)
-});
-
-
-// Server Start
-app.listen(port, () => {
-    console.log(`🚀 Server running on port ${port}`);
-});
+export const Note = mongoose.model("Note", noteSchema);
 ```
 
-# Express + Mongoose + ts: 
+```ts
+// src/modules/notes/notes.service.ts
 
-# Express + Mongoose + ts + Zod: 
+import { Note } from "./notes.model.js";
+import { CreateNoteInput, UpdateNoteInput } from "./notes.types.js";
 
-# Express + Mongoose + ts + Zod (Modular Pattern):
+export const notesService = {
+    async createNote(payload: CreateNoteInput) {
+        const result = await Note.create(payload);
+        return result;
+    },
+
+    async getAllNotes() {
+        const result = await Note.find();
+        return result;
+    },
+
+    async getSingleNote(id: string) {
+        const result = await Note.findById(id);
+        return result;
+    },
+
+    async updateNote( id: string, payload: UpdateNoteInput) {
+        const result = await Note.findByIdAndUpdate(id,payload,{new: true, runValidators: true, });
+        return result;
+    },
+
+    async deleteNote(id: string) {
+        const result = await Note.findByIdAndDelete(id);
+        return result;
+    },
+};
+```
+
+```ts 
+// src/modules/notes/notes.controller.ts
+
+import { Request, Response } from "express";
+import mongoose from "mongoose";
+
+import { notesService } from "./notes.service.js";
+
+export const notesController = {
+    async createNote(req: Request, res: Response) {
+        try {
+            const result = await notesService.createNote(req.body);
+
+            return res.status(201).send({
+                success: true,
+                message: "Note created successfully",
+                data: result,
+            });
+        }
+        catch (error) {
+            console.log(error);
+
+            return res.status(500).send({
+                success: false,
+                message: "Failed to create note",
+            });
+        }
+    },
+
+    async getAllNotes(_req: Request, res: Response) {
+        try {
+            const result = await notesService.getAllNotes();
+
+            return res.status(200).send({
+                success: true,
+                message: "Notes fetched successfully",
+                data: result,
+            });
+        }
+        catch (error) {
+            console.log(error);
+
+            return res.status(500).send({
+                success: false,
+                message: "Failed to fetch notes",
+            });
+        }
+    },
+
+    async getSingleNote(req: Request, res: Response) {
+        try {
+            const id = req.params.id;
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Invalid note id",
+                });
+            }
+
+            const result = await notesService.getSingleNote(id);
+
+            if (!result) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note fetched successfully",
+                data: result,
+            });
+        }
+        catch (error) {
+            console.log(error);
+
+            return res.status(500).send({
+                success: false,
+                message: "Failed to fetch note",
+            });
+        }
+    },
+
+    async updateNote(req: Request, res: Response) {
+        try {
+            const id = req.params.id;
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Invalid note id",
+                });
+            }
+
+            const result = await notesService.updateNote(id, req.body);
+
+            if (!result) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note updated successfully",
+                data: result,
+            });
+        }
+        catch (error) {
+            console.log(error);
+
+            return res.status(500).send({
+                success: false,
+                message: "Failed to update note",
+            });
+        }
+    },
+
+    async deleteNote(req: Request, res: Response) {
+        try {
+            const id = req.params.id;
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Invalid note id",
+                });
+            }
+
+            const result =
+                await notesService.deleteNote(id);
+
+            if (!result) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note deleted successfully",
+                data: result,
+            });
+        }
+        catch (error) {
+            console.log(error);
+
+            return res.status(500).send({
+                success: false,
+                message: "Failed to delete note",
+            });
+        }
+    },
+};
+```
+
+```ts
+// src/modules/notes.routes.ts
+
+import { Router } from "express";
+import { createNoteSchema, updateNoteSchema } from "./notes.validations.js";
+import { validate } from "../../middlewares/validate.js";
+import { notesController } from "./notes.controller.js";
+
+export const notesRoutes = Router();
+
+notesRoutes.post("/", validate(createNoteSchema), notesController.createNote);
+notesRoutes.get("/", notesController.getAllNotes);
+notesRoutes.get("/:id", notesController.getSingleNote);
+notesRoutes.patch("/:id", validate(updateNoteSchema), notesController.updateNote);
+notesRoutes.delete("/:id", notesController.deleteNote);
+```
+
 
 # Express + PostgreSQL + TS:
 ## Setup:
