@@ -16,7 +16,13 @@
 - [Express + MongoDB + JS:](#express--mongodb--js)
   - [setup:](#setup-1)
   - [Example 1:](#example-1)
+    - [Backend:](#backend)
+    - [Frontend V1 with fetch:](#frontend-v1-with-fetch)
+    - [Frontend V2 with axios:](#frontend-v2-with-axios)
+    - [Frontend V3 with axios + tanstack query:](#frontend-v3-with-axios--tanstack-query)
   - [Example 2:](#example-2)
+    - [Backend:](#backend-1)
+    - [Frontend:](#frontend)
 - [Express + MongoDB + TS:](#express--mongodb--ts)
   - [Setup:](#setup-2)
   - [Example 1:](#example-1-1)
@@ -29,22 +35,24 @@
 - [Express + Mongoose + JS:](#express--mongoose--js)
   - [Setup:](#setup-5)
   - [Example 1:](#example-1-4)
-- [Express + Mongoose + TS + Zod (Modular Pattern):](#express--mongoose--ts--zod-modular-pattern)
+- [Express + Mongoose + TS:](#express--mongoose--ts)
   - [Setup:](#setup-6)
   - [Example 1:](#example-1-5)
-- [Express + PostgreSQL + TS:](#express--postgresql--ts)
+- [Express + Mongoose + TS + Zod (Modular Pattern):](#express--mongoose--ts--zod-modular-pattern)
   - [Setup:](#setup-7)
   - [Example 1:](#example-1-6)
-- [Express + PostgreSQL + TS (Modular Pattern):](#express--postgresql--ts-modular-pattern)
+- [Express + PostgreSQL + TS:](#express--postgresql--ts)
   - [Setup:](#setup-8)
   - [Example 1:](#example-1-7)
-  - [Example 2:](#example-2-1)
-- [Express + PostgreSQL + Prisma + Ts:](#express--postgresql--prisma--ts)
+- [Express + PostgreSQL + TS + Zod (Modular Pattern):](#express--postgresql--ts--zod-modular-pattern)
   - [Setup:](#setup-9)
   - [Example 1:](#example-1-8)
-- [Express + PostgreSQL + Prisma + Ts (Modular Pattern):](#express--postgresql--prisma--ts-modular-pattern)
+- [Express + PostgreSQL + Prisma + Ts:](#express--postgresql--prisma--ts)
   - [Setup:](#setup-10)
   - [Example 1:](#example-1-9)
+- [Express + PostgreSQL + Prisma + Zod +  Ts (Modular Pattern):](#express--postgresql--prisma--zod---ts-modular-pattern)
+  - [Setup:](#setup-11)
+  - [Example 1:](#example-1-10)
 
 
 # Setup:
@@ -537,7 +545,6 @@ Note:
 **step 2:** 
 
 - `"start": "node index.js"`: Many deployment platforms (like Render, Vercel, Railway, Heroku) automatically look for this script and They use this command to run your server., if we don't include it, deployment will fail because the platform doesn't know hot to start your app.
-
 - `"dev": "nodemon index.js",`: here nodemon is not installed globally, so we can run it directly from the terminal using: `nodemon index.js`. thats why we set nodemon into the script and when we write `npm run dev` nodemon will works.
 
 ```js
@@ -575,7 +582,7 @@ PORT=3000
 
 ## Example 1:
 
-Backend:
+### Backend:
 
 ```js
 const express = require('express')
@@ -586,6 +593,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 3000
 
 const app = express()
+
 app.use(cors({
     origin: ['http://localhost:5173', 'add other frontend urls'],
     credentials: true
@@ -694,7 +702,7 @@ app.listen(port, () => {
 })
 ```
 
-Frontend V1 with fetch:
+### Frontend V1 with fetch:
 
 ```jsx
 import React, { useEffect, useState } from 'react';
@@ -928,7 +936,7 @@ const App = () => {
 export default App;
 ```
 
-Frontend V2 with axios:
+### Frontend V2 with axios:
 
 ```js
 import React, { useEffect, useState } from 'react';
@@ -1121,7 +1129,7 @@ const App = () => {
 export default App;
 ```
 
-Frontend V3 with axios + tanstack query: 
+### Frontend V3 with axios + tanstack query: 
 
 ```js
 import React, { useState } from "react";
@@ -1355,7 +1363,7 @@ export default App;
 
 ## Example 2:
 
-Backend:
+### Backend:
 
 ```js
 const express = require('express')
@@ -1365,8 +1373,12 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 3000
 
 const app = express()
-app.use(cors()) // use cors middleware
-app.use(express.json()) // use express middleware
+
+app.use(cors({
+    origin: ['http://localhost:5173', 'add other frontend urls'],
+    credentials: true
+})) 
+app.use(express.json()) 
 
 
 const uri = "mongodb://localhost:27017";
@@ -1441,7 +1453,7 @@ app.listen(port, () => {
 })
 ```
 
-Frontend: 
+### Frontend: 
 
 ```jsx
 // main.jsx
@@ -1672,8 +1684,8 @@ npm i -D typescript tsx @types/node @types/express @types/mongodb @types/cors
 npx tsc --init
 ```
 
-
 ```json
+// tsconfig.json
 {
   "compilerOptions": {
     "rootDir": "./",  
@@ -1700,8 +1712,8 @@ npx tsc --init
 }
 ```
 
-package.json:
 ```json
+// package.json:
 {
   "name": "zod-backeidn",
   "version": "1.0.0",
@@ -1733,12 +1745,18 @@ package.json:
 }
 ```
 
+```js
+// .env: 
+MONGODB_URI=mongodb://localhost:27017/
+PORT=3000
+```
+
 ## Example 1:
 
 ```ts
 // index.ts
 
-import express from 'express'
+import express, { Request, Response } from 'express'
 import cors from 'cors'
 import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb'
 import dotenv from 'dotenv'
@@ -1763,14 +1781,29 @@ const client = new MongoClient(process.env.MONGODB_URI as string, {
     }
 });
 
+type Note = {
+    _id?: ObjectId;
+    name: string;
+    description: string;
+}
+
+type CreateNoteInput = {
+    name: string;
+    description: string;
+}
+type UpdateNoteInput = {
+    name?: string;
+    description?: string;
+}
+
 async function run() {
 
-    const notesCollection = client.db("notesDB").collection('notes')
+    const notesCollection = client.db("notesDB").collection<Note>('notes')
 
     // create note
-    app.post('/note', async (req, res) => {
+    app.post('/note', async (req: Request, res: Response) => {
         try {
-            const note = req.body;
+            const note: CreateNoteInput = req.body;
             const result = await notesCollection.insertOne(note);
             return res.status(201).send({
                 success: true,
@@ -1788,7 +1821,7 @@ async function run() {
     })
 
     // GET all notes
-    app.get('/notes', async (req, res) => {
+    app.get('/notes', async (req: Request, res: Response) => {
         try {
             const result = await notesCollection.find({}).toArray();
             return res.status(200).send({
@@ -1807,9 +1840,9 @@ async function run() {
     })
 
     // GET a single note
-    app.get('/note/:id', async (req, res) => {
+    app.get('/note/:id', async (req: Request, res: Response) => {
         try {
-            const id = req.params.id
+            const id = req.params.id as string
 
             if (!ObjectId.isValid(id)) {
                 return res.status(400).send({
@@ -1845,9 +1878,9 @@ async function run() {
 
 
     //  partial update a note   
-    app.patch('/note/:id', async (req, res) => {
+    app.patch('/note/:id', async (req: Request, res: Response) => {
         try {
-            const id = req.params.id
+            const id = req.params.id as string
 
             if (!ObjectId.isValid(id)) {
                 return res.status(400).send({
@@ -1857,7 +1890,7 @@ async function run() {
             }
 
             const filter = { _id: new ObjectId(id) }
-            const updateData = req.body;
+            const updateData: UpdateNoteInput = req.body;
             const updateDoc = {
                 $set: {
                     name: updateData.name,
@@ -1889,9 +1922,9 @@ async function run() {
     })
 
     // DELETE a note
-    app.delete('/note/:id', async (req, res) => {
+    app.delete('/note/:id', async (req: Request, res: Response) => {
         try {
-            const id = req.params.id
+            const id = req.params.id as string
 
             if (!ObjectId.isValid(id)) {
                 return res.status(400).send({
@@ -1933,7 +1966,7 @@ async function run() {
 run().catch(console.dir);
 
 
-app.get('/', (req, res) => {
+app.get('/', (_req, res: Response) => {
     return res.status(200).send({
         success: true,
         message: "Server is running"
@@ -1953,10 +1986,6 @@ app.listen(port, () => {
 })
 ```
 
-```js
-// .env: 
-MONGODB_URI=mongodb://localhost:27017/
-```
 
 # Express + MongoDB + TS + Zod:
 
@@ -2030,29 +2059,23 @@ npx tsc --init
 }
 ```
 
-## Example 1: 
-
 ```ts
-// note.validation.ts
-import z from "zod";
-
-export const createNoteSchema = z.object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    description: z.string().min(5, "Description must be at least 5 characters"),
-});
-
-export const updateNoteSchema = createNoteSchema.partial();
+// .env
+MONGODB_URI=mongodb://localhost:27017/
+PORT=3000
 ```
+
+## Example 1: 
 
 ```ts
 // index.ts
 
-import express from 'express'
+import express, { Request, Response } from 'express'
 import cors from 'cors'
 import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb'
 import dotenv from 'dotenv'
 dotenv.config()
-import { createNoteSchema, updateNoteSchema } from './note.validation'
+import z from "zod";
 
 const port = process.env.PORT || 3000
 
@@ -2061,7 +2084,7 @@ const app = express()
 app.use(cors({
     origin: ['http://localhost:5173', 'add other frontend urls'],
     credentials: true
-})) // use cors middleware
+})) 
 app.use(express.json())
 
 const client = new MongoClient(process.env.MONGODB_URI as string, {
@@ -2072,14 +2095,29 @@ const client = new MongoClient(process.env.MONGODB_URI as string, {
     }
 });
 
+const createNoteSchema = z.object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    description: z.string().min(5, "Description must be at least 5 characters"),
+});
+
+const updateNoteSchema = createNoteSchema.partial();
+
+type Note = {
+    _id: ObjectId;
+    name: string;
+    description: string;
+}
+type CreateNoteInput = z.infer<typeof createNoteSchema>;
+type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
+
 async function run() {
 
-    const notesCollection = client.db("notesDB").collection('notes')
+    const notesCollection = client.db("notesDB").collection<Note>('notes')
 
     // Create Note
-    app.post('/note', async (req, res) => {
+    app.post('/note', async (req: Request, res: Response) => {
         try {
-            const data = req.body
+            const data: CreateNoteInput = req.body
             const validation = createNoteSchema.safeParse(data);
 
             if (!validation.success) {
@@ -2108,7 +2146,7 @@ async function run() {
     });
 
     // Get All Notes
-    app.get('/notes', async (req, res) => {
+    app.get('/notes', async (req: Request, res: Response) => {
         try {
             const result = await notesCollection.find({}).toArray();
 
@@ -2128,9 +2166,9 @@ async function run() {
     });
 
     // Get Single Note
-    app.get('/note/:id', async (req, res) => {
+    app.get('/note/:id', async (req: Request, res: Response) => {
         try {
-            const id = req.params.id
+            const id = req.params.id as string
 
             if (!ObjectId.isValid(id)) {
                 return res.status(400).send({
@@ -2166,9 +2204,9 @@ async function run() {
     });
 
     // Update Note
-    app.patch('/note/:id', async (req, res) => {
+    app.patch('/note/:id', async (req: Request, res: Response) => {
         try {
-            const data = req.body
+            const data: UpdateNoteInput = req.body
             const validation = updateNoteSchema.safeParse(data);
 
             if (!validation.success) {
@@ -2179,7 +2217,7 @@ async function run() {
                 });
             }
 
-            const id = req.params.id;
+            const id = req.params.id as string;
 
             if (!ObjectId.isValid(id)) {
                 return res.status(400).send({
@@ -2229,9 +2267,9 @@ async function run() {
     });
 
     // Delete Note
-    app.delete('/note/:id', async (req, res) => {
-        try {
-            const id = req.params.id
+    app.delete('/note/:id', async (req: Request, res: Response) => {
+        try { 
+            const id = req.params.id as string
 
             if (!ObjectId.isValid(id)) {
                 return res.status(400).send({
@@ -2294,7 +2332,6 @@ app.listen(port, () => {
 
 # Express + MongoDB + TS + Zod (Modular Pattern):
 
-**Note:** For modular architecture follow this golden rule: 
 ```
 Zod Validation
   ⬇️
@@ -2794,14 +2831,11 @@ notesRoutes.delete("/:id", notesController.deleteNote);
 # Express + Mongoose + JS: 
 
 ## Setup: 
-- step 1: 
 
 ```bash
 npm init -y
 npm i express mongoose nodemon cors dotenv
 ```
-
-- step 2:
 
 ```json
 {
@@ -2828,40 +2862,36 @@ npm i express mongoose nodemon cors dotenv
 }
 ```
 
-- step 3:
-
-```
+```js
+// .env
 MONGODB_URI=mongodb://localhost:27017/usersDB
 PORT=300
 ```
 
 ## Example 1: 
 
+
 ```ts
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import mongoose from "mongoose";
+const express = require("express");
+const cors = require("cors");
+const mongoose = require("mongoose");
+require("dotenv").config();
 
-import { Note } from "./src/models/note.model";
-
-dotenv.config();
-
-const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(
-    cors({
-        origin: ["http://localhost:5173"],
+const app = express();
+
+// MIDDLEWARES
+app.use(cors({
+        origin: ["http://localhost:5173", "add more frontend urls"],
         credentials: true,
     })
 );
-
 app.use(express.json());
 
 async function initDB() {
     try {
-        await mongoose.connect(process.env.MONGODB_URI as string);
+        await mongoose.connect(process.env.MONGODB_URI);
         console.log("MongoDB connected successfully");
     }
     catch (error) {
@@ -2871,6 +2901,14 @@ async function initDB() {
 }
 
 initDB();
+
+// mongoose schema
+const userSchema = new mongoose.Schema({
+    name: String,
+    description: String,
+});
+
+const Note = mongoose.model("Note", noteSchema);
 
 // CREATE NOTE
 app.post("/note", async (req, res) => {
@@ -3059,9 +3097,327 @@ app.listen(port, () => {
 });
 ```
 
+# Express + Mongoose + TS: 
+## Setup: 
+
+```bash
+npm init -y
+npm i express mongoose cors dotenv 
+npm i -D typescript tsx @types/node @types/express @types/cors 
+npx tsc --init
+```
+
+```json
+// package.json
+{
+  "name": "zod-backeidn",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "tsx watch index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/mongodb": "^4.0.6",
+    "@types/node": "^25.5.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "mongodb": "^7.1.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
+    "zod": "^4.3.6"
+  }
+}
+```
+
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "rootDir": "./",  
+    "outDir": "./dist", 
+    "module": "nodenext",
+    "target": "esnext",
+    "lib": [
+      "esnext"
+    ],
+    "types": [
+      "node"
+    ],
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "strict": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+  }
+}
+```
+
+```js
+// .env
+MONGODB_URI=mongodb://localhost:27017/usersDB
+PORT=300
+```
+
+## Example 1: 
+
+```ts
+import express, { Request, Response } from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+dotenv.config();
+
+const port = process.env.PORT || 3000;
+
+const app = express();
+
+// MIDDLEWARES
+app.use(cors({
+        origin: ["http://localhost:5173", "add more frontend urls"],
+        credentials: true,
+    })
+);
+app.use(express.json());
+
+async function initDB() {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI as string);
+        console.log("MongoDB connected successfully");
+    }
+    catch (error) {
+        console.log("MongoDB connection failed", error);
+        process.exit(1);
+    }
+}
+
+initDB();
+
+// mongoose schema
+const noteSchema = new mongoose.Schema({
+    name: String,
+    description: String,
+});
+
+const Note = mongoose.model("Note", noteSchema);
+
+type CreateNoteInput = {
+    name: string;
+    description: string;
+}
+type UpdateNoteInput = {
+    name?: string;
+    description?: string;
+}
+
+// CREATE NOTE
+app.post("/note", async (req: Request, res: Response) => {
+    try {
+        const data: CreateNoteInput = req.body;
+        const note = await Note.create(data);
+
+        return res.status(201).send({
+            success: true,
+            message: "Note created successfully",
+            data: note,
+        });
+    }
+    catch (error) {
+        console.log(error);
+
+        return res.status(500).send({
+            success: false,
+            message: "Failed to create note",
+        });
+    }
+});
+
+
+// GET ALL NOTES
+app.get("/notes", async (req: Request, res: Response) => {
+    try {
+        const notes = await Note.find();
+
+        return res.status(200).send({
+            success: true,
+            message: "Notes retrieved successfully",
+            data: notes,
+        });
+    }
+    catch (error) {
+        console.log(error);
+
+        return res.status(500).send({
+            success: false,
+            message: "Failed to retrieve notes",
+        });
+    }
+});
+
+
+// GET SINGLE NOTE
+app.get("/note/:id", async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params as string;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).send({
+                success: false,
+                message: "Invalid note id",
+            });
+        }
+
+        const note = await Note.findById(id);
+
+        if (!note) {
+            return res.status(404).send({
+                success: false,
+                message: "Note not found",
+            });
+        }
+
+        return res.status(200).send({
+            success: true,
+            message: "Note retrieved successfully",
+            data: note,
+        });
+    }
+    catch (error) {
+        console.log(error);
+
+        return res.status(500).send({
+            success: false,
+            message: "Failed to retrieve note",
+        });
+    }
+});
+
+
+// UPDATE NOTE
+app.patch("/note/:id", async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params as string;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).send({
+                success: false,
+                message: "Invalid note id",
+            });
+        }
+
+        const updateData: UpdateNoteInput = req.body;
+        const updatedNote = await Note.findByIdAndUpdate(
+            id,
+            updateData,
+            {
+                new: true,
+                runValidators: true,
+                // upsert: true; // if we used PUT
+            }
+        );
+
+        if (!updatedNote) {
+            return res.status(404).send({
+                success: false,
+                message: "Note not found",
+            });
+        }
+
+        return res.status(200).send({
+            success: true,
+            message: "Note updated successfully",
+            data: updatedNote,
+        });
+    }
+    catch (error) {
+        console.log(error);
+
+        return res.status(500).send({
+            success: false,
+            message: "Failed to update note",
+        });
+    }
+});
+
+
+// DELETE NOTE
+app.delete("/note/:id", async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params as string;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).send({
+                success: false,
+                message: "Invalid note id",
+            });
+        }
+
+        const deletedNote = await Note.findByIdAndDelete(id);
+
+        if (!deletedNote) {
+            return res.status(404).send({
+                success: false,
+                message: "Note not found",
+            });
+        }
+
+        return res.status(200).send({
+            success: true,
+            message: "Note deleted successfully",
+            data: deletedNote,
+        });
+    }
+    catch (error) {
+        console.log(error);
+
+        return res.status(500).send({
+            success: false,
+            message: "Failed to delete note",
+        });
+    }
+});
+
+
+app.get("/", (_req, res: Response) => {
+    return res.status(200).send({
+        success: true,
+        message: "Server is running",
+    });
+});
+
+
+app.use((req: Request, res: Response) => {
+    res.status(404).send({
+        success: false,
+        message: "Route Not Found",
+        path: req.path
+    });
+});
+
+app.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+});
+```
+
+
+
 # Express + Mongoose + TS + Zod (Modular Pattern):
 
-**Note:** For modular architecture follow this golden rule: 
 ```
 Zod Validation
   ⬇️
@@ -3155,7 +3511,7 @@ npx tsc --init
 
 ```ts
 // env
-MONGODB_URI=mongodb://localhost:27017/
+MONGODB_URI=mongodb://localhost:27017/notesDB
 PORT=3000
 ```
 
@@ -3568,16 +3924,12 @@ notesRoutes.delete("/:id", notesController.deleteNote);
 # Express + PostgreSQL + TS:
 ## Setup:
 
-- step 1: Install all require packages:
-
 ```bash
 npm init -y
 npm i express pg cors dotenv 
 npm i -D typescript tsx @types/node @types/express @types/pg @types/cors
 tsc --init
 ```
-
-- step 2: Modify tsconfig.json and package.json:
 
 ```json
 // tsconfig.json
@@ -3605,7 +3957,6 @@ tsc --init
 
 ```json
 // package.json
-
 {
   "name": "express-ts-postgress",
   "version": "1.0.0",
@@ -3620,7 +3971,7 @@ tsc --init
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs", 
+  "type": "module", 
   "dependencies": {
     "dotenv": "^17.4.1",
     "express": "^5.2.1",
@@ -3636,54 +3987,12 @@ tsc --init
 }
 ```
 
-- step 3: create project on neonDB and add neonDB connection string to env file: 
 
 ```js
 // .env
-CONNECTION_STR=postgresql://username:password@host:port/databaseName
+# DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/database_name
+DATABASE_URL=postgresql://postgres:hello@localhost:5432/notesDB
 PORT=3000
-```
-
-- step 4: Use this boilerplate code:
-
-```js
-// src/server.ts
-
-import express, { Request, Response } from "express";
-import { Pool } from "pg";
-import dotenv from "dotenv"
-import path from "path"
-
-const app = express();
-app.use(express.json());
-
-const port = process.env.PORT || 3000;
-dotenv.config({ path: path.join(process.cwd(), ".env") })
-const pool = new Pool({ connectionString: `${process.env.CONNECTION_STR}` });
-
-const initDB = async () => {
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS notes (
-        -- your query
-        )`)
-}
-initDB()
-
-app.get("/", (req: Request, res: Response) => {
-    res.send("PostgreSQL + TypeScript API is running!");
-});
-
-app.use((req: Request, res: Response) => {
-    res.status(404).json({
-        error: "Route not found",
-        path: req.path,
-    });
-});
-
-
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-});
 ```
 
 
@@ -3693,16 +4002,23 @@ app.listen(port, () => {
 // src/server.ts
 
 import express, { Request, Response } from "express";
+import cors from "cors";
 import { Pool } from "pg";
-import dotenv from "dotenv"
-import path from "path"
+import dotenv from 'dotenv'
+dotenv.config()
+
+const port = process.env.PORT || 3000
 
 const app = express();
+
+app.use(cors({
+    origin: ["http://localhost:5173", "add others urls"],
+    credentials: true,
+}));
 app.use(express.json());
 
-const port = process.env.PORT || 3000;
-dotenv.config({ path: path.join(process.cwd(), ".env") })
-const pool = new Pool({ connectionString: `${process.env.CONNECTION_STR}` });
+
+const pool = new Pool({ connectionString: `${process.env.DATABASE_URL}` });
 
 
 const initDB = async () => {
@@ -3715,27 +4031,35 @@ const initDB = async () => {
 }
 initDB()
 
+type CreateNoteInput = {
+    name: string;
+    description: string;
+}
+type UpdateNoteInput = {
+    name?: string;
+    description?: string;
+}
 
 // CREATE note
 app.post("/notes", async (req: Request, res: Response) => {
     try {
-        const { name, description } = req.body;
+        const data: CreateNoteInput = req.body;
 
         const result = await pool.query(
-            "INSERT INTO notes (name, description) VALUES($1, $2) RETURNING *",
-            [name, description]
-        );
+            "INSERT INTO notes (name, description) VALUES($1, $2) RETURNING *", [data.name, data.description]);
 
-        res.status(201).send({
+        return res.status(201).send({
             success: true,
-            message: "Note created",
-            data: result.rows[0]
+            message: "Note created successfully",
+            data: result.rows[0],
         });
 
-    } catch (error: any) {
-        res.status(500).send({
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).send({
             success: false,
-            message: error.message
+            message: "Failed to create note",
         });
     }
 });
@@ -3745,16 +4069,18 @@ app.get("/notes", async (req: Request, res: Response) => {
     try {
         const result = await pool.query("SELECT * FROM notes");
 
-        res.send({
+        return res.status(200).send({
             success: true,
-            message: "Notes fetched",
-            data: result.rows
+            message: "Notes retrieved successfully",
+            data: result.rows,
         });
 
-    } catch (error: any) {
-        res.status(500).send({
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).send({
             success: false,
-            message: error.message
+            message: "Failed to retrieve notes",
         });
     }
 });
@@ -3762,12 +4088,9 @@ app.get("/notes", async (req: Request, res: Response) => {
 // GET single note
 app.get("/notes/:id", async (req: Request, res: Response) => {
     try {
-        const id = req.params.id;
+        const id = Number(req.params.id) as number;
 
-        const result = await pool.query(
-            "SELECT * FROM notes WHERE id = $1",
-            [id]
-        );
+        const result = await pool.query("SELECT * FROM notes WHERE id = $1", [id]);
 
         if (result.rows.length === 0) {
             return res.status(404).send({
@@ -3776,16 +4099,18 @@ app.get("/notes/:id", async (req: Request, res: Response) => {
             });
         }
 
-        res.send({
+        return res.status(200).send({
             success: true,
-            message: "Note fetched",
-            data: result.rows[0]
+            message: "Note retrieved successfully",
+            data: result.rows[0],
         });
 
-    } catch (error: any) {
-        res.status(500).send({
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).send({
             success: false,
-            message: error.message
+            message: "Failed to retrieve note",
         });
     }
 });
@@ -3793,8 +4118,8 @@ app.get("/notes/:id", async (req: Request, res: Response) => {
 // PATCH - partial update
 app.patch("/notes/:id", async (req: Request, res: Response) => {
     try {
-        const id = req.params.id;
-        const { name, description } = req.body;
+        const id = Number(req.params.id) as number;
+        const data: UpdateNoteInput = req.body;
 
         const result = await pool.query(
             `UPDATE notes 
@@ -3803,19 +4128,28 @@ app.patch("/notes/:id", async (req: Request, res: Response) => {
                 description = COALESCE($2, description)
              WHERE id = $3
              RETURNING *`,
-            [name ?? null, description ?? null, id]
+            [data.name, data.description, data.id]
         );
 
-        res.send({
+        if (result.rows.length === 0) {
+            return res.status(404).send({
+                success: false,
+                message: "Note not found",
+            });
+        }
+
+        return res.status(200).send({
             success: true,
-            message: "Note updated",
-            data: result.rows[0]
+            message: "Note updated successfully",
+            data: result.rows[0],
         });
 
-    } catch (error: any) {
-        res.status(500).send({
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).send({
             success: false,
-            message: error.message
+            message: "Failed to update note",
         });
     }
 });
@@ -3823,8 +4157,8 @@ app.patch("/notes/:id", async (req: Request, res: Response) => {
 // PUT - full replace (upsert)
 app.put("/notes/:id", async (req: Request, res: Response) => {
     try {
-        const id = req.params.id;
-        const { name, description } = req.body;
+        const id = Number(req.params.id) as number;
+        const data: UpdateNoteInput = req.body;
 
         const result = await pool.query(
             `INSERT INTO notes (id, name, description)
@@ -3834,19 +4168,28 @@ app.put("/notes/:id", async (req: Request, res: Response) => {
                 name = EXCLUDED.name,
                 description = EXCLUDED.description
              RETURNING *`,
-            [id, name, description]
+            [data.id, data.name, data.description]
         );
 
-        res.send({
+        if (result.rows.length === 0) {
+            return res.status(404).send({
+                success: false,
+                message: "Note not found",
+            });
+        }
+
+        return res.status(200).send({
             success: true,
-            message: "Note replaced",
-            data: result.rows[0]
+            message: "Note updated successfully",
+            data: result.rows[0],
         });
 
-    } catch (error: any) {
-        res.status(500).send({
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).send({
             success: false,
-            message: error.message
+            message: "Failed to update note",
         });
     }
 });
@@ -3854,12 +4197,9 @@ app.put("/notes/:id", async (req: Request, res: Response) => {
 // DELETE note
 app.delete("/notes/:id", async (req: Request, res: Response) => {
     try {
-        const id = req.params.id;
+        const id = Number(req.params.id) as number;
 
-        const result = await pool.query(
-            "DELETE FROM notes WHERE id = $1 RETURNING *",
-            [id]
-        );
+        const result = await pool.query("DELETE FROM notes WHERE id = $1 RETURNING *", [id]);
 
         if (result.rows.length === 0) {
             return res.status(404).send({
@@ -3868,29 +4208,35 @@ app.delete("/notes/:id", async (req: Request, res: Response) => {
             });
         }
 
-        res.send({
+        return res.status(200).send({
             success: true,
-            message: "Note deleted",
-            data: result.rows[0]
+            message: "Note deleted successfully",
+            data: result.rows[0],
         });
 
-    } catch (error: any) {
-        res.status(500).send({
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).send({
             success: false,
-            message: error.message
+            message: "Failed to delete note",
         });
     }
 });
 
 
-app.get("/", (req: Request, res: Response) => {
-    res.send("PostgreSQL + TypeScript API is running!");
-});
+app.get('/', (_req, res) => {
+    return res.status(200).send({
+        success: true,
+        message: "Server is running",
+    });
+})
 
 app.use((req: Request, res: Response) => {
     res.status(404).send({
-        error: "Route not found",
-        path: req.path,
+        success: false,
+        message: "Route Not Found",
+        path: req.path
     });
 });
 
@@ -3900,20 +4246,42 @@ app.listen(port, () => {
 });
 ```
 
-# Express + PostgreSQL + TS (Modular Pattern): 
+
+
+# Express + PostgreSQL + TS + Zod (Modular Pattern): 
+
+**Note:** For modular architecture follow this golden rule: 
+```
+Zod Validation
+  ⬇️
+Types
+  ⬇️
+Service
+  ⬇️
+Controller
+  ⬇️
+Route
+  ⬇️
+app
+  ⬇️
+server
+```
+
+| Layer      | Main Responsibility                   |
+| ---------- | ------------------------------------- |
+| Service    | handle business logic + DB operations |
+| Controller | handle HTTP request/response          |
+| Route      | handle API endpoint                   |
+
 
 ## Setup:
 
-- step 1: Install all require packages:
-
 ```bash
 npm init -y
-npm i express pg dotenv cors
+npm i express pg dotenv cors zod
 npm i -D typescript tsx @types/node @types/express @types/pg @types/cors 
 tsc --init
 ```
-
-- step 2: Modify tsconfig.json and package.json:
 
 ```json
 // tsconfig.json
@@ -3980,12 +4348,10 @@ tsc --init
 }
 ```
 
-- step 3: create project on neonDB and add neonDB connection string to env file: 
-
 ```js
 // .env
-# CONNECTION_STR=CONNECTION_STR=postgresql://postgres:YOUR_PASSWORD@localhost:5432/todo_app
-CONNECTION_STR=CONNECTION_STR=postgresql://postgres:hello@localhost:5432/vehiclesDB
+# DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/database_name
+DATABASE_URL=CONNECTION_STR=postgresql://postgres:hello@localhost:5432/notesDB
 PORT=3000
 ```
 
@@ -3994,62 +4360,96 @@ PORT=3000
 ```js
 src/
 │
+├── app.ts
+├── server.ts
+│
 ├── config/
-│ ├── db.ts 
-│ └── env.ts 
+│   ├── db.ts
+│   └── env.ts
 │
 ├── modules/
-│ └── todo/
-│ ├── todo.controllers.ts # Handles HTTP requests & responses
-│ ├── todo.routes.ts # Defines API routes
-│ ├── todo.services.ts # Business logic & DB queries
-│ └── todo.types.ts # TypeScript types
+│   └── notes/
+│       ├── notes.routes.ts
+│       ├── notes.controller.ts
+│       ├── notes.service.ts
+│       ├── notes.validations.ts
+│       └── notes.types.ts
 │
-├── app.ts # Express app configuration (middlewares, routes)
-└── server.ts # Server entry point (listen on port)
+├── middlewares/
+│   └── validate.ts
 ```
 
-```js
-// src/config/env.ts
-
-import dotenv from "dotenv"
-// import path from "path"
-
-
-dotenv.config()
-
-// or
-// dotenv.config({ path: path.join(process.cwd(), ".env") })
-// console.log(process.cwd())
-// /home/muhammad-tamim/programming/programming hero/lavel-2/module-12
-// console.log(path.join(process.cwd(), '.env'))
-// /home/muhammad-tamim/programming/programming hero/lavel-2/module-12/.env
-
-
-
-const envConfig = {
-    connectionStr: process.env.CONNECTION_STR,
-    port: process.env.PORT,
-}
-
-export default envConfig
-```
-
-```js
+```ts
 // src/config/db.ts
+
 import { Pool } from "pg";
 import envConfig from "./env.js";
 
-export const pool = new Pool({ connectionString: envConfig.connectionStr });
+export const pool = new Pool({connectionString: envConfig.databaseUrl});
 
-export const initDB = async () => {
-    await pool.query(`
-    CREATE TABLE IF NOT EXISTS notes (
-      id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      description TEXT NOT NULL
-    )
-  `);
+export async function initDB() {
+    try {
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS notes (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL
+            )
+        `);
+
+        console.log("PostgreSQL connected successfully");
+    }
+    catch (error) {
+        console.log("PostgreSQL connection failed", error);
+
+        process.exit(1);
+    }
+}
+```
+
+```ts
+// src/config/env.ts
+
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const envConfig = {
+    databaseUrl: process.env.DATABASE_URL as string,
+    port: process.env.PORT,
+};
+
+export default envConfig;
+```
+
+```ts
+// src/middlewares/validate.ts
+
+import { Request, Response, NextFunction } from "express";
+import { ZodType } from "zod";
+
+export const validate = (schema: ZodType) => (req: Request, res: Response, next: NextFunction) => {
+
+    const validation = schema.safeParse(req.body);
+
+    if (!validation.success) {
+
+        const errors = validation.error.issues.map(issue => ({
+            field: issue.path.join("."),
+            message: issue.message,
+        }));
+
+        return res.status(400).send({
+            success: false,
+            message: "Validation failed",
+            errors,
+        });
+    }
+
+    req.body = validation.data;
+
+    next();
 };
 ```
 
@@ -4059,34 +4459,36 @@ export const initDB = async () => {
 import express, { Request, Response } from "express";
 import cors from "cors";
 import { initDB } from "./config/db.js";
-import { todoRoutes } from "./modules/todo/todo.routes.js";
+import { notesRoutes } from "./modules/notes/notes.route.js";
 
 const app = express();
 
-// Middlewares
 app.use(cors({
-    origin: ["http://localhost:3000", "others-allowed-origins.com"],
+    origin: ["http://localhost:5173"],
     credentials: true,
 }));
 app.use(express.json());
 
-initDB()
+initDB();
 
+app.use("/notes", notesRoutes);
 
-app.use("/todos", todoRoutes)
-
-app.get("/", (_req: Request, res: Response) => {
-    res.send("Hello Express!");
+app.get("/", (_req, res) => {
+    return res.status(200).send({
+        success: true,
+        message: "Server is running",
+    });
 });
 
 app.use((req: Request, res: Response) => {
-    res.status(404).send({
-        error: "Route Not Found",
-        path: req.path
-    })
-})
+    return res.status(404).send({
+        success: false,
+        message: "Route Not Found",
+        path: req.path,
+    });
+});
 
-export default app
+export default app;
 ```
 
 ```ts
@@ -4103,223 +4505,262 @@ app.listen(port, () => {
 ```
 
 ```ts
-// src/utils/apiResponse.ts
+// src/modules/notes/notes.validations.ts
 
-export const apiResponse = {
-    success(res: any, data: any, message = "OK") {
-        return res.status(200).send({
-            success: true,
-            message,
-            data
-        });
+import z from "zod";
+
+export const createNoteSchema = z.object({
+    name: z.string().min(2),
+    description: z.string().min(5),
+});
+
+export const updateNoteSchema = createNoteSchema.partial();
+```
+
+```ts
+// src/modules/notes/notes.types.ts
+
+import z from "zod";
+import { createNoteSchema,updateNoteSchema,} from "./notes.validations.js";
+
+export type CreateNoteInput = z.infer<typeof createNoteSchema>;
+
+export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
+```
+
+```ts
+// src/modules/notes/notes.service.ts
+
+import { pool } from "../../config/db.js";
+
+import { CreateNoteInput, UpdateNoteInput,} from "./notes.types.js";
+
+export const notesService = {
+
+    async createNote(payload: CreateNoteInput) {
+
+        const result = await pool.query(
+            `
+            INSERT INTO notes (name, description)
+            VALUES ($1, $2)
+            RETURNING *
+            `,
+            [payload.name, payload.description]
+        );
+
+        return result.rows[0];
     },
 
-    created(res: any, data: any, message = "Created") {
-        return res.status(201).send({
-            success: true,
-            message,
-            data
-        });
+    async getAllNotes() {
+
+        const result = await pool.query(`
+            SELECT * FROM notes
+            ORDER BY id DESC
+        `);
+
+        return result.rows;
     },
 
-    error(res: any, message = "Something went wrong", status = 500) {
-        return res.status(status).send({
-            success: false,
-            message
-        });
-    }
+    async getSingleNote(id: number) {
+
+        const result = await pool.query(
+            `
+            SELECT * FROM notes
+            WHERE id = $1
+            `,
+            [id]
+        );
+
+        return result.rows[0];
+    },
+
+    async updateNote(id: number, payload: UpdateNoteInput) {
+
+        const result = await pool.query(
+            `
+            UPDATE notes
+            SET
+                name = COALESCE($1, name),
+                description = COALESCE($2, description)
+            WHERE id = $3
+            RETURNING *
+            `,
+            [payload.name, payload.description, id]
+        );
+
+        return result.rows[0];
+    },
+
+    async deleteNote(id: number) {
+
+        const result = await pool.query(
+            `
+            DELETE FROM notes
+            WHERE id = $1
+            RETURNING *
+            `,
+            [id]
+        );
+
+        return result.rows[0];
+    },
 };
 ```
 
 ```ts
-// src/modules/todo/todo.types.ts
+// src/modules/notes/notes.controller.ts
 
-export type Create = {
-    name: string,
-    description: string
-}
+import { Request, Response } from "express";
+import { notesService } from "./notes.service.js";
 
-export type Update = {
-    name?: string,
-    description?: string
-}
-```
-
-```js
-// src/modules/todo/todo.services.ts
-
-import { pool } from "../../config/db.js";
-import { Create, Update } from "./todo.types.js";
-
-export const todoServices = {
-    async create(car: Create) {
-        const { name, description } = car
-        const result = await pool.query(
-            "INSERT INTO notes (name, description) VALUES($1, $2) RETURNING *",
-            [name, description]
-        );
-        return result
-    },
-
-    async findAll() {
-        const result = await pool.query("SELECT * FROM notes");
-        return result;
-    },
-
-    async findOne(id: string) {
-        const result = await pool.query(
-            "SELECT * FROM notes WHERE id = $1",
-            [id]
-        );
-        return result;
-    },
-
-    async updateOne(id: string, data: Update) {
-        const { name, description } = data;
-        const result = await pool.query(
-            `UPDATE notes 
-             SET 
-                name = COALESCE($1, name), 
-                description = COALESCE($2, description) 
-             WHERE id = $3 
-             RETURNING *`,
-            [name ?? null, description ?? null, id]
-        );
-        return result;
-    },
-
-    async replaceOne(id: string, data: Update) {
-        const { name, description } = data;
-
-        const result = await pool.query(
-            `INSERT INTO notes (id, name, description)
-             VALUES ($1, $2, $3)
-             ON CONFLICT (id)
-             DO UPDATE SET 
-                name = EXCLUDED.name, 
-                description = EXCLUDED.description
-             RETURNING *`,
-            [id, name, description]
-        );
-        return result;
-    },
-
-    async deleteOne(id: string) {
-        const result = await pool.query(
-            "DELETE FROM notes WHERE id = $1 RETURNING *",
-            [id]
-        );
-        return result;
-    }
-}
-```
-
-```ts
-// src/modules/todo/todo.controllers.ts
-
-import { Request, Response } from "express"
-import { todoServices } from "./todo.services.js"
-import { Update } from "./todo.types.js"
-import { apiResponse } from "../../utils/apiResponse.js"
-
-export const todoControllers = {
-    async createTodo(req: Request, res: Response) {
+export const notesController = {
+    async createNote(req: Request, res: Response) {
         try {
-            const result = await todoServices.create(req.body)
-            return apiResponse.created(res, result.rows[0], "Note created");
+            const result =
+                await notesService.createNote(req.body);
+
+            return res.status(201).send({
+                success: true,
+                message: "Note created successfully",
+                data: result,
+            });
         }
-        catch (err: any) {
-            return apiResponse.error(res, err.message);
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to create note",
+            });
         }
     },
 
-    async findAllTodo(req: Request, res: Response) {
+    async getAllNotes(_req: Request, res: Response) {
         try {
-            const result = await todoServices.findAll()
-            return apiResponse.success(res, result.rows, "Todos fetched");
+            const result = await notesService.getAllNotes();
+
+            return res.status(200).send({
+                success: true,
+                message: "Notes fetched successfully",
+                data: result,
+            });
         }
-        catch (err: any) {
-            return apiResponse.error(res, err.message);
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to fetch notes",
+            });
         }
     },
 
-    async findOneTodo(req: Request, res: Response) {
+    async getSingleNote( req: Request, res: Response) {
         try {
-            const id = req.params.id as string
-            const result = await todoServices.findOne(id)
-            return apiResponse.success(res, result.rows[0], "Todo fetched")
+            const id = Number(req.params.id);
+
+            const result = await notesService.getSingleNote(id);
+
+            if (!result) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note fetched successfully",
+                data: result,
+            });
         }
-        catch (err: any) {
-            return apiResponse.error(res, err.message);
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to fetch note",
+            });
         }
     },
 
-    async updateOneTodo(req: Request, res: Response) {
+    async updateNote(req: Request, res: Response) {
         try {
-            const id = req.params.id as string
-            const { name, description } = req.body
-            const updatedData: Update = { name, description }
-            const result = await todoServices.updateOne(id, updatedData)
-            return apiResponse.success(res, result.rows[0], "Todo updated");
+            const id = Number(req.params.id);
+
+            const result = await notesService.updateNote(id, req.body);
+
+            if (!result) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note updated successfully",
+                data: result,
+            });
         }
-        catch (err: any) {
-            return apiResponse.error(res, err.message);
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to update note",
+            });
         }
     },
 
-    async replaceOneTodo(req: Request, res: Response) {
+    async deleteNote(req: Request, res: Response) {
         try {
-            const id = req.params.id as string
-            const { name, description } = req.body
-            const updatedData: Update = { name, description }
-            const result = await todoServices.replaceOne(id, updatedData)
-            return apiResponse.success(res, result.rows[0], "Todo replaced");
+            const id = Number(req.params.id);
+
+            const result = await notesService.deleteNote(id);
+
+            if (!result) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note deleted successfully",
+                data: result,
+            });
         }
-        catch (err: any) {
-            return apiResponse.error(res, err.message);
+        catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to delete note",
+            });
         }
     },
-
-    async deleteOneTodo(req: Request, res: Response) {
-        try {
-            const id = req.params.id as string
-            const result = await todoServices.deleteOne(id)
-            return apiResponse.success(res, result.rows[0], "Todo deleted");
-        }
-        catch (err: any) {
-            return apiResponse.error(res, err.message);
-        }
-    }
-}
+};
 ```
 
 ```ts
-// src/modules/todo/todo.routes.ts
-
+// src/modules/notes/notes.routes.ts
 
 import { Router } from "express";
-import { todoControllers } from "./todo.controllers.js";
+import { createNoteSchema, updateNoteSchema } from "./notes.validations.js";
+import { validate } from "../../middlewares/validate.js";
+import { notesController } from "./notes.controller.js";
 
-const router = Router()
+export const notesRoutes = Router();
 
-router.post("/", todoControllers.createTodo)
-router.get("/", todoControllers.findAllTodo)
-router.get("/:id", todoControllers.findOneTodo)
-router.patch("/:id", todoControllers.updateOneTodo)
-router.put("/:id", todoControllers.replaceOneTodo)
-router.delete("/:id", todoControllers.deleteOneTodo)
-
-export const todoRoutes = router
+notesRoutes.post("/", validate(createNoteSchema), notesController.createNote);
+notesRoutes.get("/", notesController.getAllNotes);
+notesRoutes.get("/:id", notesController.getSingleNote);
+notesRoutes.patch("/:id", validate(updateNoteSchema), notesController.updateNote);
+notesRoutes.delete("/:id", notesController.deleteNote);
 ```
 
-## Example 2: 
-
-https://github.com/tamim-111/b6a2
-
-
 # Express + PostgreSQL + Prisma + Ts: 
+
 ## Setup: 
-- Step 1: Install dependencies
+
+**Step 1:**
 
 ```bash
 npm init -y
@@ -4329,21 +4770,38 @@ npx tsc --init
 ```
 
 here, 
-  - prisma - The Prisma CLI for running commands like prisma init, prisma migrate, and prisma generate
-  - @prisma/client - The Prisma Client library for querying your database
-  - @prisma/adapter-pg - The node-postgres driver adapter that connects Prisma Client to your database
+- prisma - The Prisma CLI for running commands like prisma init, prisma migrate, and prisma generate
+- @prisma/client - The Prisma Client library for querying our database
+- @prisma/adapter-pg - The node-postgres driver adapter that connects Prisma Client to our database
 
 
-- Step 2: Configure ESM support: 
+**Step 2:** 
 
 ```json
 // tsconfig.json
 {
   "compilerOptions": {
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "target": "ES2023",
+    "rootDir": "./",
+    "outDir": "./dist",
+    "module": "esnext",
+    "target": "es2023",
+    "lib": [
+      "esnext"
+    ],
+    "types": [
+      "node"
+    ],
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
     "strict": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "ignoreDeprecations": "6.0"
   }
@@ -4353,39 +4811,65 @@ here,
 ```json
 // package.json
 {
-  "type": "module"
-}
-"scripts": {
+  "name": "express-pg-prisma-ts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./index.ts",
+  "scripts": {
     "dev": "tsx watch ./index.ts",
     "build": "tsc",
     "start": "node ./dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
-},
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "pg": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.1",
+    "@types/pg": "^8.20.0",
+    "prisma": "^7.8.0",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
+  }
+}
 ```
 
-- Step 3:  Initialize Prisma ORM: 
+**Step 3:**  Initialize Prisma ORM: 
 
 ```bash
 npx prisma init --datasource-provider postgresql --output ../generated/prisma
 ```
 
-This command does a few things:
-  - Creates a prisma/ directory with a schema.prisma file containing your database connection and schema models
-  - Creates a .env file in the root directory for environment variables
-  - Creates a prisma.config.ts file for Prisma configuration 
+This command does few things:
+- Creates a `prisma` directory with a `schema.prisma` file containing our database connection and schema models: 
+- Creates a `.env` file in the root directory for environment variables
+- Creates a `prisma.config.ts` file for Prisma configuration 
 
-- Step 4: update env file with database connection string: 
+**Step 4:**
 
 ```js
-DATABASE_URL="postgresql://username:password@localhost:5432/mydb?schema=public"
+// .env
+# DATABASE_URL="postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public"
+DATABASE_URL="postgresql://postgres:hello@localhost:5432/notesDB?schema=public"
+PORT=3000
 ```
 
-- Step 5: Define data model: 
-
-Open prisma/schema.prisma and add the following models:
+**Step 5:** Define database model
 
 ```js
 // prisma/schema.prisma
+
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -4395,30 +4879,26 @@ datasource db {
   provider = "postgresql"
 }
 
-model User { 
-  id    Int     @id @default(autoincrement()) 
-  name  String?
-  email String  @unique
-} 
+// database models
+model Note {
+  id          Int    @id @default(autoincrement())
+  name        String
+  description String
+}
 ```
 
-- step 6: Create and apply your first migration: 
-
-Create and apply your first migration
+**Step 6:** Create and apply first migration and generate
 
 ```bash
 npx prisma migrate dev --name init
-```
-
-This command creates the database tables based on your schema. Now run the following command to generate the Prisma Client:
-
-```bash
 npx prisma generate
 ```
 
-- Step 7: Instantiate Prisma Client: 
+here:
+- `npx prisma migrate dev --name init`: Runs database migrations from schema.prisma data model and creates raw PostgreSQL queries on this directory `prisma/migrations`.
+- `npx prisma generate`: Generates the TypeScript for Prisma Client
 
-Now that you have all the dependencies installed, you can instantiate Prisma Client. You need to pass an instance of the Prisma ORM driver adapter adapter to the PrismaClient constructor:
+**Step 7:** Instantiate Prisma Client
 
 ```js
 // lib/prisma.ts
@@ -4434,47 +4914,7 @@ const prisma = new PrismaClient({ adapter });
 export { prisma };
 ```
 
-- step 8: use this boilerplate code to test setup: 
-
-```ts
-import express, { Request, Response } from "express";
-import dotenv from "dotenv";
-import path from "path";
-import { prisma } from "./lib/prisma";
-
-dotenv.config({ path: path.join(process.cwd(), ".env") });
-
-const app = express();
-app.use(express.json());
-
-const port = process.env.PORT || 3000;
-
-
-app.get("/", (req: Request, res: Response) => {
-    res.send("Prisma + PostgreSQL + TypeScript API is running!");
-});
-
-
-
-/*
-add all crud routes here
-*/
-
-
-
-app.use((req: Request, res: Response) => {
-    res.status(404).send({
-        error: "Route not found",
-        path: req.path,
-    });
-});
-
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-});
-```
-
-step 9: We can explore our data with Prisma Studio
+**step 8:** Now we can explore our data with Prisma Studio
 
 ```bash
 npx prisma studio
@@ -4483,204 +4923,284 @@ npx prisma studio
 ## Example 1: 
 
 ```ts
-import express, { Request, Response } from "express";
-import dotenv from "dotenv";
-import path from "path";
-import { prisma } from "./lib/prisma";
+// index.ts
 
-dotenv.config({ path: path.join(process.cwd(), ".env") });
+import express, { Request, Response } from "express";
+import cors from "cors";
+import { prisma } from "./lib/prisma";
+import dotenv from 'dotenv'
+dotenv.config()
+
+const port = process.env.PORT || 3000
 
 const app = express();
+
+app.use(cors({
+    origin: ["http://localhost:5173", "add others urls"],
+    credentials: true,
+}));
 app.use(express.json());
 
-const port = process.env.PORT || 3000;
+type CreateNoteInput = {
+    name: string;
+    description: string;
+}
+type UpdateNoteInput = {
+    name?: string;
+    description?: string;
+}
 
-/**
- * CREATE user
- */
-app.post("/users", async (req: Request, res: Response) => {
+// CREATE note
+app.post("/notes", async (req: Request, res: Response) => {
     try {
+        const inputData: CreateNoteInput = req.body;
 
-        const user = await prisma.user.create({ data: req.body });
 
-        res.status(201).send({
+        const result = await prisma.note.create({ data: inputData });
+
+        return res.status(201).send({
             success: true,
-            message: "User created",
-            data: user,
+            message: "Note created successfully",
+            data: result,
         });
+    } catch (error) {
+        console.log(error);
 
-    } catch (error: any) {
-        res.status(500).send({
+        return res.status(500).send({
             success: false,
-            message: error.message,
+            message: "Failed to create note",
         });
     }
 });
 
-/**
- * GET all users
- */
-app.get("/users", async (_req: Request, res: Response) => {
+// GET all notes
+app.get("/notes", async (_req: Request, res: Response) => {
     try {
-        const users = await prisma.user.findMany();
+        const result = await prisma.note.findMany();
 
-        res.send({
+        return res.status(200).send({
             success: true,
-            message: "Users fetched",
-            data: users,
+            message: "Notes retrieved successfully",
+            data: result,
         });
+    } catch (error) {
+        console.log(error);
 
-    } catch (error: any) {
-        res.status(500).send({
+        return res.status(500).send({
             success: false,
-            message: error.message,
+            message: "Failed to retrieve notes",
         });
     }
 });
 
-/**
- * GET single user by ID
- */
-app.get("/users/:id", async (req: Request, res: Response) => {
+// GET single note
+app.get("/notes/:id", async (req: Request, res: Response) => {
     try {
-        const id = Number(req.params.id);
+        const id = Number(req.params.id) as number;
 
-        const user = await prisma.user.findUnique({
-            where: { id },
+        const result = await prisma.note.findUnique({
+            where: { id }
         });
 
-        if (!user) {
+        if (!result) {
             return res.status(404).send({
                 success: false,
-                message: "User not found",
+                message: "Note not found",
             });
         }
 
-        res.send({
+        return res.status(200).send({
             success: true,
-            message: "User fetched",
-            data: user,
+            message: "Note retrieved successfully",
+            data: result,
         });
+    } catch (error) {
+        console.log(error);
 
-    } catch (error: any) {
-        res.status(500).send({
+        return res.status(500).send({
             success: false,
-            message: error.message,
+            message: "Failed to retrieve note",
         });
     }
 });
-
-/**
- * PATCH - partial update
- */
-app.patch("/users/:id", async (req: Request, res: Response) => {
+// PATCH - partial update
+app.patch("/notes/:id", async (req: Request, res: Response) => {
     try {
-        const id = Number(req.params.id);
-        const { name, email } = req.body;
+        const id = Number(req.params.id) as number;
+        const updateData: UpdateNoteInput = req.body;
 
-        const user = await prisma.user.update({
+        const existingNote = await prisma.note.findUnique({
             where: { id },
+        });
+
+        if (!existingNote) {
+            return res.status(404).send({
+                success: false,
+                message: "Note not found",
+            });
+        }
+
+        const result = await prisma.note.update({
+            where: {
+                id,
+            },
             data: {
-                ...(name !== undefined && { name }),
-                ...(email !== undefined && { email }),
+                ...(data.name !== undefined && { data.name }),
+                ...(data.description !== undefined && { data.description }),
             },
         });
 
-        res.send({
+        return res.status(200).send({
             success: true,
-            message: "User updated",
-            data: user,
+            message: "Note updated successfully",
+            data: result,
         });
+    } catch (error) {
+        console.log(error);
 
-    } catch (error: any) {
-        res.status(500).send({
+        return res.status(500).send({
             success: false,
-            message: error.message,
+            message: "Failed to update note",
         });
     }
 });
 
-/**
- * PUT - full replace (UPSERT)
- */
-app.put("/users/:id", async (req: Request, res: Response) => {
+
+app.put("/notes/:id", async (req: Request, res: Response) => {
     try {
         const id = Number(req.params.id);
-        const { name, email } = req.body;
+        const updateData: UpdateNoteInput = req.body;
 
-        const user = await prisma.user.upsert({
-            where: { id },
-            update: { name, email },
-            create: { id, name, email },
-        });
-
-        res.send({
-            success: true,
-            message: "User replaced",
-            data: user,
-        });
-
-    } catch (error: any) {
-        res.status(500).send({
-            success: false,
-            message: error.message,
-        });
-    }
-});
-
-/**
- * DELETE user
- */
-app.delete("/users/:id", async (req: Request, res: Response) => {
-    try {
-        const id = Number(req.params.id);
-
-        const user = await prisma.user.delete({
+        const existingNote = await prisma.note.findUnique({
             where: { id },
         });
 
-        res.send({
-            success: true,
-            message: "User deleted",
-            data: user,
+        if (!existingNote) {
+            return res.status(404).send({
+                success: false,
+                message: "Note not found",
+            });
+        }
+
+        const result = await prisma.note.update({
+            where: {
+                id,
+            },
+            data: updateData,
         });
 
-    } catch (error: any) {
-        res.status(404).send({
+        return res.status(200).send({
+            success: true,
+            message: "Note replaced successfully",
+            data: result,
+        });
+    } catch (error) {
+        console.log(error);
+
+        return res.status(500).send({
             success: false,
-            message: "User not found",
+            message: "Failed to replace note",
         });
     }
 });
 
-app.get("/", (_req: Request, res: Response) => {
-    res.send("Prisma + PostgreSQL + TypeScript API is running!");
+// DELETE note
+app.delete("/notes/:id", async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id) as number;
+
+        const existingNote = await prisma.note.findUnique({
+            where: { id },
+        });
+
+        if (!existingNote) {
+            return res.status(404).send({
+                success: false,
+                message: "Note not found",
+            });
+        }
+
+        const result = await prisma.note.delete({
+            where: { id },
+        });
+
+        return res.status(200).send({
+            success: true,
+            message: "Note deleted successfully",
+            data: result,
+        });
+    } catch (error) {
+        console.log(error);
+
+        return res.status(500).send({
+            success: false,
+            message: "Failed to delete note",
+        });
+    }
 });
+
+
+app.get('/', (_req, res: Response) => {
+    return res.status(200).send({
+        success: true,
+        message: "Server is running",
+    });
+})
 
 app.use((req: Request, res: Response) => {
     res.status(404).send({
-        error: "Route not found",
-        path: req.path,
+        success: false,
+        message: "Route Not Found",
+        path: req.path
     });
 });
+
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
 ```
 
-# Express + PostgreSQL + Prisma + Ts (Modular Pattern): 
+# Express + PostgreSQL + Prisma + Zod +  Ts (Modular Pattern): 
+
+```
+Zod Validation
+  ⬇️
+Types
+  ⬇️
+Database Model (prisma)
+  ⬇️
+Service
+  ⬇️
+Controller
+  ⬇️
+Route
+  ⬇️
+app
+  ⬇️
+server
+```
+
+| Layer      | Main Responsibility                   |
+| ---------- | ------------------------------------- |
+| Service    | handle business logic + DB operations |
+| Controller | handle HTTP request/response          |
+| Route      | handle API endpoint                   |
+
+
+
 ## Setup: 
-- Step 1: Install dependencies
+**Step 1:**
 
 ```bash
 npm init -y
-npm i express pg dotenv cors @prisma/client @prisma/adapter-pg
+npm i express pg dotenv cors zod @prisma/client @prisma/adapter-pg
 npm i -D typescript tsx prisma @types/node @types/express @types/pg @types/cors 
 npx tsc --init
 ```
 
-- Step 2: Modify tsconfig.json and package.json:
+**Step 2:**
+
 ```json
 // tsconfig.json
 {
@@ -4763,12 +5283,12 @@ npx tsc --init
 npx prisma init --datasource-provider postgresql --output ../generated/prisma
 ```
 
-- Step 4: update env file with database connection string: 
+- Step 4: update env file: 
 
 ```js
-DATABASE_URL="postgresql://username:password@localhost:5432/mydb?schema=public"\
-// DATABASE_URL="postgresql://postgres:hello@localhost:5432/test?schema=public"
-// port=3000
+// .env
+DATABASE_URL="postgresql://postgres:hello@localhost:5432/notesDB?schema=public"
+port=3000
 ```
 
 - Step 5: Define data model: 
@@ -4791,7 +5311,7 @@ model Note {
 }
 ```
 
-- step 6: Create and apply your first migration: 
+- step 6: Create and apply your first migration and generate Prisma Client: 
 
 ```bash
 npx prisma migrate dev --name init
@@ -4800,16 +5320,14 @@ npx prisma generate
 
 - Step 7: Instantiate Prisma Client: 
 
-Now that you have all the dependencies installed, you can instantiate Prisma Client. You need to pass an instance of the Prisma ORM driver adapter adapter to the PrismaClient constructor:
-
 ```js
 // src/lib/prisma.ts
 
 import { PrismaPg } from "@prisma/adapter-pg";
-import config from "../config/env";
 import { PrismaClient } from "../generated/prisma/client";
+import envConfig from "../config/env";
 
-const connectionString = config.databaseUrl;
+const connectionString = envConfig.databaseUrl;
 
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
@@ -4825,7 +5343,7 @@ npx prisma studio
 
 ## Example 1:  
 
-```
+```js
 node_modules
 prisma/
     schema.prisma
@@ -4838,11 +5356,10 @@ src/
     modules/
         notes/ 
             note.types.ts
-            note.services.ts
-            note.controllers.ts
+            note.validations.ts
+            note.service.ts
+            note.controller.ts
             note.routes.ts
-    utils/
-        apiResponse.ts
     app.ts
     server.ts
 ```
@@ -4854,184 +5371,42 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const config = {
-    port: process.env.PORT || "3000",
-    databaseUrl: process.env.DATABASE_URL,
+const envConfig = {
+    port: process.env.PORT || 3000,
+    databaseUrl: process.env.DATABASE_URL
 };
 
-export default config;
+export default envConfig;
 ```
 
 ```ts
-// src/utils/apiResponse.ts
+// src/middleware/validate.ts
 
-export const apiResponse = {
-    success(res: any, data: any, message = "OK") {
-        return res.status(200).send({
-            success: true,
-            message,
-            data
-        });
-    },
+import { Request, Response, NextFunction } from "express";
+import { ZodType } from "zod";
 
-    created(res: any, data: any, message = "Created") {
-        return res.status(201).send({
-            success: true,
-            message,
-            data
-        });
-    },
+export const validate = (schema: ZodType) => (req: Request, res: Response, next: NextFunction) => {
 
-    error(res: any, message = "Something went wrong", status = 500) {
-        return res.status(status).send({
+    const validation = schema.safeParse(req.body);
+
+    if (!validation.success) {
+
+        const errors = validation.error.issues.map(issue => ({
+            field: issue.path.join("."),
+            message: issue.message,
+        }));
+
+        return res.status(400).send({
             success: false,
-            message
+            message: "Validation failed",
+            errors: errors,
         });
     }
+
+    req.body = validation.data;
+
+    next();
 };
-```
-
-```ts
-// src/modules/note/note.types.ts
-
-export type CreateNote = {
-    name: string;
-    description: string;
-};
-
-export type UpdateNote = {
-    name?: string;
-    description?: string;
-};
-```
-
-```ts
-// src/modules/note/note.services.ts
-
-import { prisma } from "../../lib/prisma.js";
-import { CreateNote, UpdateNote } from "./note.types.js";
-
-export const noteServices = {
-    create(data: CreateNote) {
-        return prisma.note.create({ data });
-    },
-
-    findAll() {
-        return prisma.note.findMany();
-    },
-
-    findOne(id: number) {
-        return prisma.note.findUnique({ where: { id } });
-    },
-
-    updateOne(id: number, data: UpdateNote) {
-        return prisma.note.update({
-            where: { id },
-            data,
-        });
-    },
-
-    replaceOne(id: number, data: CreateNote) {
-        return prisma.note.upsert({
-            where: { id },
-            update: data,
-            create: { id, ...data },
-        });
-    },
-
-    deleteOne(id: number) {
-        return prisma.note.delete({
-            where: { id },
-        });
-    },
-};
-```
-
-```ts
-// src/modules/note/note.controllers.ts
-
-import { Request, Response } from "express";
-import { apiResponse } from "../../utils/apiResponse";
-import { noteServices } from "./note.controllers";
-
-export const noteControllers = {
-    async create(req: Request, res: Response) {
-        try {
-            const result = await noteServices.create(req.body);
-            return apiResponse.created(res, result, "Note created");
-        } catch (err: any) {
-            return apiResponse.error(res, err.message);
-        }
-    },
-
-    async findAll(_req: Request, res: Response) {
-        try {
-            const result = await noteServices.findAll();
-            return apiResponse.success(res, result, "Notes retrieved");
-        } catch (err: any) {
-            return apiResponse.error(res, err.message);
-        }
-    },
-
-    async findOne(req: Request, res: Response) {
-        try {
-            const id = Number(req.params.id);
-            const result = await noteServices.findOne(id);
-            return apiResponse.success(res, result, "Note retrieved");
-        } catch (err: any) {
-            return apiResponse.error(res, err.message);
-        }
-    },
-
-    async update(req: Request, res: Response) {
-        try {
-            const id = Number(req.params.id);
-            const result = await noteServices.updateOne(id, req.body);
-            return apiResponse.success(res, result, "Note updated");
-        } catch (err: any) {
-            return apiResponse.error(res, err.message);
-        }
-    },
-
-    async replace(req: Request, res: Response) {
-        try {
-            const id = Number(req.params.id);
-            const result = await noteServices.replaceOne(id, req.body);
-            return apiResponse.success(res, result, "Note replaced");
-        } catch (err: any) {
-            return apiResponse.error(res, err.message);
-        }
-    },
-
-    async delete(req: Request, res: Response) {
-        try {
-            const id = Number(req.params.id);
-            const result = await noteServices.deleteOne(id);
-            return apiResponse.success(res, result, "Note deleted");
-        } catch (err: any) {
-            return apiResponse.error(res, err.message);
-        }
-    },
-};
-```
-
-
-```ts
-// src/modules/note/note.routes.ts
-
-import { Router } from "express";
-import { noteControllers } from "./note.services";
-
-const router = Router();
-
-router.post("/", noteControllers.create);
-router.get("/", noteControllers.findAll);
-router.get("/:id", noteControllers.findOne);
-router.patch("/:id", noteControllers.update);
-router.put("/:id", noteControllers.replace);
-router.delete("/:id", noteControllers.delete);
-
-export const noteRoutes = router;
 ```
 
 ```ts
@@ -5039,26 +5414,29 @@ export const noteRoutes = router;
 
 import express, { Request, Response } from "express";
 import cors from "cors";
-import { noteRoutes } from "./modules/note/note.routes";
+import { notesRoutes } from "./modules/notes/notes.routes.js";
 
 const app = express();
-app.use(express.json());
 
 app.use(cors({
-    origin: "*", // change this in production
+    origin: ["http://localhost:5173"],
     credentials: true,
-})
-);
+}));
+app.use(express.json());
 
-app.use("/notes", noteRoutes);
+app.use("/notes", notesRoutes);
 
-app.get("/", (_req: Request, res: Response) => {
-    res.send("Hello Prisma!");
+app.get("/", (_req, res) => {
+    return res.status(200).send({
+        success: true,
+        message: "Server is running",
+    });
 });
 
 app.use((req: Request, res: Response) => {
-    res.status(404).send({
-        error: "Route Not Found",
+    return res.status(404).send({
+        success: false,
+        message: "Route Not Found",
         path: req.path,
     });
 });
@@ -5070,39 +5448,232 @@ export default app;
 // src/server.ts
 
 import app from "./app.js";
-import config from "./config/env.js";
-import { prisma } from "./lib/prisma.js";
+import envConfig from "./config/env.js";
 
-const port = Number(config.port) || 3000;
-
-async function startServer() {
-    try {
-        await prisma.$connect();
-        console.log("Connected to the database successfully.");
-
-        app.listen(port, () => {
-            console.log(`Server is running on http://localhost:${port}`);
-        });
-    } catch (error) {
-        console.error("An error occurred:", error);
-        await prisma.$disconnect();
-        process.exit(1);
-    }
-}
-
-startServer()
-```
-
-```js
-// simplified
-
-import app from "./app.js";
-import config from "./config/env.js";
-
-const port = Number(config.port) || 3000;
-
+const port = Number(envConfig.port);
 
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+    console.log(`Server running on port ${port}`);
 });
+```
+
+```ts
+// src/modules/notes/notes.validations.ts
+
+import z from "zod";
+
+export const createNoteSchema = z.object({
+    name: z.string().min(2),
+    description: z.string().min(5),
+});
+
+export const updateNoteSchema = createNoteSchema.partial();
+```
+
+```ts
+// src/modules/notes/notes.types.ts
+import z from "zod";
+import { createNoteSchema, updateNoteSchema, } from "./notes.validations.js";
+
+export type CreateNoteInput = z.infer<typeof createNoteSchema>;
+
+export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
+```
+
+```ts
+// src/modules/notes/notes.service.ts
+
+import { prisma } from "../../lib/prisma.js";
+import { CreateNoteInput, UpdateNoteInput, } from "./notes.types.js";
+
+export const notesService = {
+
+    async createNote(payload: CreateNoteInput) {
+        const result = await prisma.note.create({ data: payload });
+        return result;
+    },
+
+    async getAllNotes() {
+        const result = prisma.note.findMany({
+            orderBy: {
+                id: "desc",
+            },
+        });
+        return result
+    },
+
+    async getSingleNote(id: number) {
+        const result = prisma.note.findUnique({
+            where: { id },
+        });
+        return result
+    },
+
+    async updateNote(id: number, payload: UpdateNoteInput) {
+        const result = prisma.note.update({
+            where: { id },
+            data: payload,
+        });
+        return result
+    },
+
+    async deleteNote(id: number) {
+        const result = prisma.note.delete({
+            where: { id },
+        });
+        return result
+    },
+};
+```
+
+```ts
+// src/modules/notes/notes.controller.ts
+
+import { Request, Response } from "express";
+import { notesService } from "./notes.service.js";
+
+export const notesController = {
+    async createNote(req: Request, res: Response) {
+        try {
+            const result = await notesService.createNote(req.body);
+
+            return res.status(201).send({
+                success: true,
+                message: "Note created successfully",
+                data: result,
+            });
+
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to create note",
+            });
+        }
+    },
+
+    async getAllNotes(_req: Request, res: Response) {
+        try {
+            const result = await notesService.getAllNotes();
+
+            return res.status(200).send({
+                success: true,
+                message: "Notes retrieved successfully",
+                data: result,
+            });
+
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to retrieve notes",
+            });
+        }
+    },
+
+    async getSingleNote(req: Request, res: Response) {
+        try {
+            const id = Number(req.params.id);
+
+            const result = await notesService.getSingleNote(id);
+
+            if (!result) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            return res.status(200).send({
+                success: true,
+                message: "Note retrieved successfully",
+                data: result,
+            });
+
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to retrieve note",
+            });
+        }
+    },
+
+    async updateNote(req: Request, res: Response) {
+        try {
+            const id = Number(req.params.id);
+
+            const existing = await notesService.getSingleNote(id);
+
+            if (!existing) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            const result = await notesService.updateNote(id, req.body);
+
+            return res.status(200).send({
+                success: true,
+                message: "Note updated successfully",
+                data: result,
+            });
+
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to update note",
+            });
+        }
+    },
+
+    async deleteNote(req: Request, res: Response) {
+        try {
+            const id = Number(req.params.id);
+
+            const existing = await notesService.getSingleNote(id);
+
+            if (!existing) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Note not found",
+                });
+            }
+
+            const result = await notesService.deleteNote(id);
+
+            return res.status(200).send({
+                success: true,
+                message: "Note deleted successfully",
+                data: result,
+            });
+
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                success: false,
+                message: "Failed to delete note",
+            });
+        }
+    },
+};
+```
+
+```ts
+// src/modules/notes/notes.routes.ts
+
+import { Router } from "express";
+import { validate } from "../../middlewares/validate.js";
+import { createNoteSchema, updateNoteSchema } from "./notes.validations.js";
+import { notesController } from "./notes.controller.js";
+
+export const notesRoutes = Router();
+
+notesRoutes.post( "/", validate(createNoteSchema), notesController.createNote);
+notesRoutes.get("/", notesController.getAllNotes);
+notesRoutes.get("/:id", notesController.getSingleNote);
+notesRoutes.patch("/:id", validate(updateNoteSchema), notesController.updateNote);
+notesRoutes.delete("/:id", notesController.deleteNote);
 ```
